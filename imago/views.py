@@ -1,6 +1,7 @@
 import json
 from django.http import HttpResponse
 from django.views.generic.base import View
+from django.core.serializers.json import DateTimeAwareJSONEncoder
 from imago.core import db
 
 
@@ -17,61 +18,75 @@ class JsonView(View):
             (optional - default False)
         default_fields - mongodb fields parameter if not specified
             (optional - defaults to all)
-
-    query_from_request(self, request, *args)
-    sort_from_request(self, request)
+        per_page
+            (optional- defaults to 100)
+        query_params
+            (optional defaults to [])
     """
 
     find_one = False
     default_fields = None
     per_page = 100
-    max_per_page = 200
+    query_params = ()
 
     def get(self, request, *args, **kwargs):
-        data = self.get_data(request, *args, **kwargs)
+        get_params = request.GET.copy()
+        data = self.get_data(get_params, *args, **kwargs)
 
         if self.find_one:
             pass
         else:
             total = data.count()
-            per_page = _clamp(int(request.GET.get('per_page', self.per_page)),
-                              1, self.max_per_page)
-            page = _clamp(int(request.GET.get('page', 0)), 0, total/per_page)
+
+            try:
+                per_page = _clamp(
+                    int(get_params.get('per_page', self.per_page)),
+                    1, self.per_page
+                )
+            except ValueError:
+                per_page = self.per_page
+
+            try:
+                page = _clamp(int(get_params.get('page', 0)),
+                              0, total/per_page)
+            except ValueError:
+                page = 0
+
             data = list(data.skip(page*per_page).limit(per_page))
             data = {'results': data, 'meta': {'page': page,
                                               'per_page': per_page,
                                               'count': len(data),
                                               'total_count': total,
-                                              'pages': total/per_page,
+                                              'max_page': total/per_page,
                                              }
                    }
 
-        data = json.dumps(self._clean(data),
-                          # cls=DateTimeAwareJSONEncoder,
+        data = json.dumps(self._clean(data), cls=DateTimeAwareJSONEncoder,
                           ensure_ascii=False)
 
         # JSONP
-        cb = request.GET.get('callback', None)
+        cb = get_params.get('callback', None)
         if cb:
             return '{0}({1})'.format(cb, data)
 
         return HttpResponse(data)
 
-    def get_data(self, request, *args, **kwargs):
-        query = self.query_from_request(request, *args, **kwargs)
-        fields = self.fields_from_request(request)
+    def get_data(self, get_params, *args, **kwargs):
+        # make copy of get_params and pop things off
+        fields = self.fields_from_request(get_params)
+        sort = self.sort_from_request(get_params)
+        query = self.query_from_request(get_params, *args, **kwargs)
         if self.find_one:
             result = self.collection.find_one(query, fields=fields)
         else:
             result = self.collection.find(query, fields=fields)
-            sort = self.sort_from_request(request)
             if sort:
                 result = result.sort(sort)
 
         return result
 
-    def fields_from_request(self, request):
-        fields = request.GET.get('fields')
+    def fields_from_request(self, get_params):
+        fields = get_params.get('fields', None)
 
         if not fields:
             return self.default_fields
@@ -81,8 +96,21 @@ class JsonView(View):
             d['_type'] = 1
             return d
 
-    def sort_from_request(self, request):
-        return None
+    def sort_from_request(self, get_params):
+        sort = get_params.get('sort', None)
+        return sort
+
+    def query_from_request(self, get_params, *args):
+        query = {}
+        for key in self.query_params:
+            if key in get_params:
+                if key.endswith('__lt'):
+                    query[key[:-4]] = {'$lt': get_params[key]}
+                elif key.endswith('__gt'):
+                    query[key[:-4]] = {'$gt': get_params[key]}
+                else:
+                    query[key] = get_params[key]
+        return query
 
     def _clean(self, obj):
         if isinstance(obj, dict):
@@ -102,22 +130,59 @@ class JsonView(View):
         return obj
 
 
+class DetailView(JsonView):
+    find_one = True
+
+    def query_from_request(self, get_params, id):
+        return {'_id': id}
+
+
+class MetadataDetail(DetailView):
+    collection = db.metadata
+
+
+class OrganizationDetail(DetailView):
+    collection = db.organizations
+
+
+class PersonDetail(DetailView):
+    collection = db.people
+
+
+class BillDetail(DetailView):
+    collection = db.bills
+
+
+
 class MetadataList(JsonView):
     collection = db.metadata
     default_fields = {'name': 1, 'feature_flags': 1, 'chambers': 1, '_id': 1}
-
-    def query_from_request(self, request, *args):
-        # always return all of them?
-        return {}
 
     def sort_from_request(self, request):
         return 'name'
 
 
-class MetadataDetail(JsonView):
-    collection = db.metadata
-    find_one = True
+class OrganizationList(JsonView):
+    collection = db.organizations
+    default_fields = {'contact_details': 0, 'sources': 0, 'posts': 0}
+    query_params = ('classification', 'name', 'identifiers',
+                    'founding_date', 'founding_date__gt', 'founding_date__lt',
+                    'dissolution_date', 'dissolution_date__gt',
+                    'dissolution_date__lt')
 
-    def query_from_request(self, request, id):
-        return {'_id': id}
 
+class PeopleList(JsonView):
+    collection = db.people
+    default_fields = {'contact_details': 0, 'sources': 0, 'extras': 0,
+                      'links': 0, 'other_names': 0}
+    query_params = ('name','gender')
+
+
+class BillList(JsonView):
+    collection = db.bills
+    default_fields = {'sponsors': 0, 'sources': 0, 'actions': 0,
+                      'links': 0, 'versions': 0, 'related_bills': 0,
+                      'summaries': 0, 'subject': 0, 'other_titles': 0,
+                      'documents': 0, 'other_names': 0
+                     }
+    query_params = ('name', 'name__in', 'chamber', 'session')
