@@ -9,6 +9,11 @@ def _clamp(val, _min, _max):
     return _min if val < _min else _max if val > _max else val
 
 
+def mongo_bulk_get(collection, ids):
+    results = collection.find({'_id': {'$in': ids}})
+    return {r['_id']: r for r in results}
+
+
 class JsonView(View):
     """ Base view for writing API views
 
@@ -141,13 +146,44 @@ class MetadataDetail(DetailView):
     collection = db.metadata
 
 
+
 class OrganizationDetail(DetailView):
     collection = db.organizations
+
+    def get_data(self, *args, **kwargs):
+        data = super(OrganizationDetail, self).get_data(*args, **kwargs)
+        data['memberships'] = list(db.memberships.find(
+            {'organization_id': data['_id']}))
+
+        people = mongo_bulk_get(
+            db.people,
+            [m['person_id'] for m in data['memberships'] if m['person_id']]
+        )
+        for m in data['memberships']:
+            person_id = m['person_id']
+            m['person'] = people[person_id] if person_id else None
+
+        return data
 
 
 class PersonDetail(DetailView):
     collection = db.people
 
+    def get_data(self, *args, **kwargs):
+        data = super(PersonDetail, self).get_data(*args, **kwargs)
+        data['memberships'] = list(db.memberships.find(
+            {'person_id': data['_id']}))
+
+        orgs = mongo_bulk_get(
+            db.organizations,
+            [m['organization_id'] for m in data['memberships']
+             if m['organization_id']]
+        )
+        for m in data['memberships']:
+            org_id = m['organization_id']
+            m['organization'] = orgs[org_id] if org_id else None
+
+        return data
 
 class BillDetail(DetailView):
     collection = db.bills

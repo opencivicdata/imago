@@ -1,4 +1,4 @@
 import pymongo
 
-db = pymongo.Connection()['ocd']
+db = pymongo.Connection()['opencivicdata']
 
