@@ -107,12 +107,15 @@ class JsonView(View):
 
     def query_from_request(self, get_params, *args):
         query = {}
-        for key in self.query_params:
-            if key in get_params:
+        for key in get_params:
+            if key in self.query_params or key.startswith('id:'):
                 if key.endswith('__lt'):
                     query[key[:-4]] = {'$lt': get_params[key]}
                 elif key.endswith('__gt'):
                     query[key[:-4]] = {'$gt': get_params[key]}
+                elif key.startswith('id:'):
+                    query['identifiers'] = {'scheme': key[3:],
+                                            'identifier': get_params[key]}
                 else:
                     query[key] = get_params[key]
         return query
