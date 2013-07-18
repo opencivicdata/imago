@@ -10,7 +10,7 @@ from imago.views import (MetadataList,
                         )
 
 urlpatterns = patterns('',
-    (r'^metadata/$', MetadataList.as_view()),
+    (r'^jurisdictions/$', MetadataList.as_view()),
     (r'^organizations/$', OrganizationList.as_view()),
     (r'^people/$', PeopleList.as_view()),
     (r'^bills/$', BillList.as_view()),
