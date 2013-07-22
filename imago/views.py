@@ -107,17 +107,30 @@ class JsonView(View):
 
     def query_from_request(self, get_params, *args):
         query = {}
-        for key in get_params:
-            if key in self.query_params or key.startswith('id:'):
-                if key.endswith('__lt'):
-                    query[key[:-4]] = {'$lt': get_params[key]}
-                elif key.endswith('__gt'):
-                    query[key[:-4]] = {'$gt': get_params[key]}
-                elif key.startswith('id:'):
-                    query['identifiers'] = {'scheme': key[3:],
-                                            'identifier': get_params[key]}
-                else:
-                    query[key] = get_params[key]
+
+        for key, value in get_params.iteritems():
+            # if this is an operator query, get the key & operator
+            if '__' in key:
+                key, operator = key.split('__')
+            else:
+                operator = None
+
+            # for now, skip bad keys, FIXME
+            if key not in self.query_params and operator != 'id':
+                continue
+
+            if not operator:
+                query[key] = value
+            elif operator in ('gt', 'gte', 'lt', 'lte', 'ne'):
+                query[key] = {'$'+operator: value}
+            elif operator in ('all', 'in', 'nin'):
+                query[key] = {'$'+operator: value.split('|')}
+            elif operator == 'id':
+                query['identifiers'] = {'scheme': key,
+                                        'identifier': value}
+            else:
+                raise Exception('invalid operator: ' + operator)
+
         return query
 
     def _clean(self, obj):
@@ -147,7 +160,6 @@ class DetailView(JsonView):
 
 class MetadataDetail(DetailView):
     collection = db.metadata
-
 
 
 class OrganizationDetail(DetailView):
@@ -188,9 +200,22 @@ class PersonDetail(DetailView):
 
         return data
 
+
 class BillDetail(DetailView):
     collection = db.bills
 
+    def get_data(self, *args, **kwargs):
+        data = super(BillDetail, self).get_data(*args, **kwargs)
+        data['votes'] = list(db.votes.find({'bill.id': data['_id']}))
+        return data
+
+
+class EventDetail(DetailView):
+    collection = db.events
+
+
+class VoteDetail(DetailView):
+    collection = db.votes
 
 
 class MetadataList(JsonView):
@@ -205,9 +230,7 @@ class OrganizationList(JsonView):
     collection = db.organizations
     default_fields = {'contact_details': 0, 'sources': 0, 'posts': 0}
     query_params = ('classification', 'name', 'identifiers',
-                    'founding_date', 'founding_date__gt', 'founding_date__lt',
-                    'dissolution_date', 'dissolution_date__gt',
-                    'dissolution_date__lt')
+                    'founding_date', 'dissolution_date')
 
 
 class PeopleList(JsonView):
@@ -224,4 +247,17 @@ class BillList(JsonView):
                       'summaries': 0, 'subject': 0, 'other_titles': 0,
                       'documents': 0, 'other_names': 0
                      }
-    query_params = ('name', 'name__in', 'chamber', 'session')
+    query_params = ('name', 'chamber', 'session')
+
+
+class EventList(JsonView):
+    collection = db.events
+    default_fields = {'sources': 0}
+    query_params = ('jurisdiction_id', 'when')
+
+
+class VoteList(JsonView):
+    collection = db.votes
+    default_fields = {'roll_call': 0, 'sources': 0}
+    query_params = ('jurisdiction_id', 'date', 'passed', 'chamber', 'session',
+                    'type')
