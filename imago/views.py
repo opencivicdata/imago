@@ -1,4 +1,6 @@
+import re
 import json
+import datetime
 from django.http import HttpResponse
 from django.views.generic.base import View
 from django.core.serializers.json import DateTimeAwareJSONEncoder
@@ -12,6 +14,30 @@ def _clamp(val, _min, _max):
 def mongo_bulk_get(collection, ids):
     results = collection.find({'_id': {'$in': ids}})
     return {r['_id']: r for r in results}
+
+
+def time_param(param):
+    formats = ('%Y-%m-%d', '%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S',
+               '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m', '%Y')
+    dt = None
+    if param == 'now':
+        dt = datetime.datetime.utcnow()
+    else:
+        for format in formats:
+            try:
+                dt = datetime.datetime.strptime(param, format)
+                break
+            except ValueError:
+                continue
+    return dt
+
+
+def boolean_param(param):
+    return param.lower() == 'true'
+
+
+def fuzzy_string_param(param):
+    return re.compile(r'\b{0}\b'.format(param), re.IGNORECASE)
 
 
 class JsonView(View):
@@ -32,15 +58,13 @@ class JsonView(View):
     find_one = False
     default_fields = None
     per_page = 100
-    query_params = ()
+    query_params = {}
 
     def get(self, request, *args, **kwargs):
         get_params = request.GET.copy()
         data = self.get_data(get_params, *args, **kwargs)
 
-        if self.find_one:
-            pass
-        else:
+        if not self.find_one:
             total = data.count()
 
             try:
@@ -115,8 +139,12 @@ class JsonView(View):
             else:
                 operator = None
 
-            # for now, skip bad keys, FIXME
-            if key not in self.query_params and operator != 'id':
+            # skip keys that aren't in query_params or ending with __id
+            if key in self.query_params:
+                param_func = self.query_params[key]
+                if param_func:
+                    value = param_func(value)
+            elif operator != 'id':
                 continue
 
             if not operator:
@@ -220,7 +248,7 @@ class VoteDetail(DetailView):
 
 class MetadataList(JsonView):
     collection = db.metadata
-    default_fields = {'name': 1, 'feature_flags': 1, 'chambers': 1, '_id': 1}
+    default_fields = {'terms': 0, 'session_details': 0, 'chambers': 0}
 
     def sort_from_request(self, request):
         return 'name'
@@ -228,16 +256,49 @@ class MetadataList(JsonView):
 
 class OrganizationList(JsonView):
     collection = db.organizations
-    default_fields = {'contact_details': 0, 'sources': 0, 'posts': 0}
-    query_params = ('classification', 'name', 'identifiers',
-                    'founding_date', 'dissolution_date')
-
+    default_fields = {'contact_details': 0, 'sources': 0, 'posts': 0,
+                      'founding_date': 0, 'dissolution_date': 0}
+    query_params = {'classification': None,
+                    'founding_date': None,
+                    'dissolution_date': None,
+                    'jurisdiction_id': None,
+                    'parent_id': None,
+                    'geography_id': None,
+                    'name': fuzzy_string_param,
+                    'updated_at': time_param,
+                    'created_at': time_param}
 
 class PeopleList(JsonView):
     collection = db.people
     default_fields = {'contact_details': 0, 'sources': 0, 'extras': 0,
-                      'links': 0, 'other_names': 0}
-    query_params = ('name','gender')
+                      'links': 0, 'birth_date': 0, 'death_date': 0}
+    query_params = {'name': fuzzy_string_param,
+                    'gender': None,
+                    'birth_date': None,
+                    'death_date': None,
+                    'created_at': time_param,
+                    'updated_at': time_param
+                    # member_of
+                    # ever_member_of
+                   }
+
+    def query_from_request(self, get_params, *args):
+        query = super(PeopleList, self).query_from_request(get_params, *args)
+        member_of = get_params.pop('member_of', [None])[0]
+        ever_member_of = get_params.pop('ever_member_of', [None])[0]
+
+        if member_of and ever_member_of:
+            raise ValueError('cannot pass member_of and ever_member_of')
+        elif member_of:
+            ids = db.memberships.find(
+                {'organization_id': member_of, 'end_date': None}
+            ).distinct('person_id')
+            query['_id'] = {'$in': ids}
+        elif ever_member_of:
+            ids = db.memberships.find({'organization_id': member_of}
+                                     ).distinct('person_id')
+            query['_id'] = {'$in': ids}
+        return query
 
 
 class BillList(JsonView):
@@ -245,19 +306,36 @@ class BillList(JsonView):
     default_fields = {'sponsors': 0, 'sources': 0, 'actions': 0,
                       'links': 0, 'versions': 0, 'related_bills': 0,
                       'summaries': 0, 'subject': 0, 'other_titles': 0,
-                      'documents': 0, 'other_names': 0
+                      'documents': 0
                      }
-    query_params = ('name', 'chamber', 'session')
+    query_params = {'name': None,
+                    'chamber': None,
+                    'session': None,
+                    'jurisdiction_id': None,
+                    'type': None,
+                    'created_at': time_param,
+                    'updated_at': time_param}
+    # TODO: other_names (everywhere)
+    # TODO: title search?, text search, search_window, sponsorship, subject
 
 
 class EventList(JsonView):
     collection = db.events
     default_fields = {'sources': 0}
-    query_params = ('jurisdiction_id', 'when')
+    query_params = {'jurisdiction_id': None,
+                    'when': time_param,
+                    'created_at': time_param,
+                    'updated_at': time_param}
 
 
 class VoteList(JsonView):
     collection = db.votes
     default_fields = {'roll_call': 0, 'sources': 0}
-    query_params = ('jurisdiction_id', 'date', 'passed', 'chamber', 'session',
-                    'type')
+    query_params = {'jurisdiction_id': None,
+                    'date': None,
+                    'passed': boolean_param,
+                    'chamber': None,
+                    'session': None,
+                    'type': None,
+                    'created_at': time_param,
+                    'updated_at': time_param}
