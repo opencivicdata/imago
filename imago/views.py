@@ -7,6 +7,17 @@ from django.core.serializers.json import DateTimeAwareJSONEncoder
 from imago.core import db
 
 
+class APIError(Exception):
+
+    def __init__(self, msg, status=400):
+        self.msg = msg
+        self.status = status
+
+    def __str__(self):
+        return str(self.msg)
+
+
+
 def _clamp(val, _min, _max):
     return _min if val < _min else _max if val > _max else val
 
@@ -29,6 +40,8 @@ def time_param(param):
                 break
             except ValueError:
                 continue
+        else:
+            raise APIError('unrecognized datetime format: ' + param)
     return dt
 
 
@@ -62,7 +75,12 @@ class JsonView(View):
 
     def get(self, request, *args, **kwargs):
         get_params = request.GET.copy()
-        data = self.get_data(get_params, *args, **kwargs)
+        try:
+            data = self.get_data(get_params, *args, **kwargs)
+        except APIError as e:
+            resp = {'error': str(e)}
+            data = json.dumps(resp)
+            return HttpResponse(data, status=e.status)
 
         if not self.find_one:
             total = data.count()
@@ -101,16 +119,12 @@ class JsonView(View):
         return HttpResponse(data)
 
     def get_data(self, get_params, *args, **kwargs):
-        # make copy of get_params and pop things off
         fields = self.fields_from_request(get_params)
         sort = self.sort_from_request(get_params)
         query = self.query_from_request(get_params, *args, **kwargs)
-        if self.find_one:
-            result = self.collection.find_one(query, fields=fields)
-        else:
-            result = self.collection.find(query, fields=fields)
-            if sort:
-                result = result.sort(sort)
+        result = self.collection.find(query, fields=fields)
+        if sort:
+            result = result.sort(sort)
 
         return result
 
@@ -135,7 +149,7 @@ class JsonView(View):
         for key, value in get_params.iteritems():
             # if this is an operator query, get the key & operator
             if '__' in key:
-                key, operator = key.split('__')
+                key, operator = key.split('__', 1)
             else:
                 operator = None
 
@@ -147,6 +161,8 @@ class JsonView(View):
             elif operator != 'id':
                 continue
 
+            print operator
+
             if not operator:
                 query[key] = value
             elif operator in ('gt', 'gte', 'lt', 'lte', 'ne'):
@@ -157,7 +173,7 @@ class JsonView(View):
                 query['identifiers'] = {'scheme': key,
                                         'identifier': value}
             else:
-                raise Exception('invalid operator: ' + operator)
+                raise APIError('invalid operator: ' + operator)
 
         return query
 
@@ -184,6 +200,16 @@ class DetailView(JsonView):
 
     def query_from_request(self, get_params, id):
         return {'_id': id}
+
+    def get_data(self, get_params, *args, **kwargs):
+        fields = self.fields_from_request(get_params)
+        query = self.query_from_request(get_params, *args, **kwargs)
+        result = self.collection.find_one(query, fields=fields)
+
+        if not result:
+            raise APIError('no such object: ' + query['_id'], 404)
+
+        return result
 
 
 class MetadataDetail(DetailView):
@@ -288,7 +314,7 @@ class PeopleList(JsonView):
         ever_member_of = get_params.pop('ever_member_of', [None])[0]
 
         if member_of and ever_member_of:
-            raise ValueError('cannot pass member_of and ever_member_of')
+            raise APIError('cannot pass member_of and ever_member_of')
         elif member_of:
             ids = db.memberships.find(
                 {'organization_id': member_of, 'end_date': None}
