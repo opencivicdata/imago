@@ -114,7 +114,7 @@ class JsonView(View):
         # JSONP
         cb = get_params.get('callback', None)
         if cb:
-            return '{0}({1})'.format(cb, data)
+            data = '{0}({1})'.format(cb, data)
 
         return HttpResponse(data)
 
