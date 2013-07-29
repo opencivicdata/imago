@@ -161,8 +161,6 @@ class JsonView(View):
             elif operator != 'id':
                 continue
 
-            print operator
-
             if not operator:
                 query[key] = value
             elif operator in ('gt', 'gte', 'lt', 'lte', 'ne'):
@@ -333,14 +331,14 @@ class BillList(JsonView):
     collection = db.bills
     default_fields = {'sponsors': 0, 'sources': 0, 'actions': 0,
                       'links': 0, 'versions': 0, 'related_bills': 0,
-                      'summaries': 0, 'subject': 0, 'other_titles': 0,
-                      'documents': 0
-                     }
+                      'summaries': 0, 'other_titles': 0, 'documents': 0 }
     query_params = {'name': None,
                     'chamber': None,
                     'session': None,
                     'jurisdiction_id': None,
                     'type': None,
+                    'subject': None,
+                    'sponsors.id': None,
                     'created_at': time_param,
                     'updated_at': time_param}
     # TODO: other_names (everywhere)
