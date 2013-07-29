@@ -309,7 +309,7 @@ class PeopleList(JsonView):
                     'birth_date': None,
                     'death_date': None,
                     'created_at': time_param,
-                    'updated_at': time_param
+                    'updated_at': time_param,
                     'district': None,
                     # member_of
                     # ever_member_of
