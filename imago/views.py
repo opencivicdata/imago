@@ -1,6 +1,9 @@
 import re
 import json
+import copy
 import datetime
+from collections import defaultdict
+import pymongo
 from django.http import HttpResponse
 from django.views.generic.base import View
 from django.core.serializers.json import DateTimeAwareJSONEncoder
@@ -66,12 +69,16 @@ class JsonView(View):
             (optional- defaults to 100)
         query_params
             (optional defaults to [])
+        default_sort
+        default_subfields
     """
 
     find_one = False
     default_fields = None
     per_page = 100
     query_params = {}
+    default_sort = [('created_at', pymongo.DESCENDING)]
+    default_subfields = None
 
     def get(self, request, *args, **kwargs):
         get_params = request.GET.copy()
@@ -140,7 +147,7 @@ class JsonView(View):
             return d
 
     def sort_from_request(self, get_params):
-        sort = get_params.get('sort', None)
+        sort = get_params.get('sort', self.default_sort)
         return sort
 
     def query_from_request(self, get_params, *args):
@@ -275,9 +282,7 @@ class VoteDetail(DetailView):
 class MetadataList(JsonView):
     collection = db.metadata
     default_fields = {'terms': 0, 'session_details': 0, 'chambers': 0}
-
-    def sort_from_request(self, request):
-        return 'name'
+    default_sort = 'name'
 
 
 class OrganizationList(JsonView):
