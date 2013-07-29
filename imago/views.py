@@ -295,6 +295,7 @@ class OrganizationList(JsonView):
                     'jurisdiction_id': None,
                     'parent_id': None,
                     'geography_id': None,
+                    'chamber': None,
                     'name': fuzzy_string_param,
                     'updated_at': time_param,
                     'created_at': time_param}
@@ -309,6 +310,7 @@ class PeopleList(JsonView):
                     'death_date': None,
                     'created_at': time_param,
                     'updated_at': time_param
+                    'district': None,
                     # member_of
                     # ever_member_of
                    }
@@ -317,18 +319,24 @@ class PeopleList(JsonView):
         query = super(PeopleList, self).query_from_request(get_params, *args)
         member_of = get_params.pop('member_of', [None])[0]
         ever_member_of = get_params.pop('ever_member_of', [None])[0]
+        mem_specs = []
 
         if member_of and ever_member_of:
             raise APIError('cannot pass member_of and ever_member_of')
         elif member_of:
-            ids = db.memberships.find(
-                {'organization_id': member_of, 'end_date': None}
-            ).distinct('person_id')
-            query['_id'] = {'$in': ids}
+            mem_specs = [{'organization_id': _id, 'end_date': None} for _id in
+                         member_of.split(',')]
         elif ever_member_of:
-            ids = db.memberships.find({'organization_id': member_of}
-                                     ).distinct('person_id')
-            query['_id'] = {'$in': ids}
+            mem_specs = [{'organization_id': _id} for _id in
+                         member_of.split(',')]
+
+        # intersection of resulting ids from multiple subqueries
+        if mem_specs:
+            ids = set(db.memberships.find(mem_specs[0]).distinct('person_id'))
+            for spec in mem_specs[1:]:
+                ids &= set(db.memberships.find(spec).distinct('person_id'))
+            query['_id'] = {'$in': list(ids)}
+
         return query
 
 
