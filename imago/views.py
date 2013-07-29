@@ -221,8 +221,9 @@ class OrganizationDetail(DetailView):
 
     def get_data(self, *args, **kwargs):
         data = super(OrganizationDetail, self).get_data(*args, **kwargs)
+        mem_fields = {'_id': 0}
         data['memberships'] = list(db.memberships.find(
-            {'organization_id': data['_id']}))
+            {'organization_id': data['_id']}, fields=mem_fields))
 
         people = mongo_bulk_get(
             db.people,
@@ -240,8 +241,9 @@ class PersonDetail(DetailView):
 
     def get_data(self, *args, **kwargs):
         data = super(PersonDetail, self).get_data(*args, **kwargs)
+        mem_fields = {'_id': 0}
         data['memberships'] = list(db.memberships.find(
-            {'person_id': data['_id']}))
+            {'person_id': data['_id']}, fields=mem_fields))
 
         orgs = mongo_bulk_get(
             db.organizations,
@@ -351,7 +353,8 @@ class EventList(JsonView):
     query_params = {'jurisdiction_id': None,
                     'when': time_param,
                     'created_at': time_param,
-                    'updated_at': time_param}
+                    'updated_at': time_param,
+                   }
 
 
 class VoteList(JsonView):
@@ -363,5 +366,6 @@ class VoteList(JsonView):
                     'chamber': None,
                     'session': None,
                     'type': None,
+                    'bill.id': None,
                     'created_at': time_param,
                     'updated_at': time_param}
