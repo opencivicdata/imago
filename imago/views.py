@@ -350,6 +350,8 @@ class EventList(JsonView):
     default_fields = {'sources': 0}
     query_params = {'jurisdiction_id': None,
                     'when': time_param,
+                    'participants.id': None,
+                    'agenda.related_entities.id': None,
                     'created_at': time_param,
                     'updated_at': time_param,
                    }
