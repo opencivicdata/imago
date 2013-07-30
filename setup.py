@@ -1,12 +1,19 @@
 #!/usr/bin/env python
-from setuptools import setup
+from setuptools import setup, find_packages
+from imago import __version__
 
 setup(name='imago',
-      version='0.0.1',
+      version=__version__,
+      packages=find_packages(),
       author="James Turk",
       author_email="jturk@sunlightfoundation.com",
       license="BSD",
-      description='Imago',
+      url='http://github.com/openscivicdata/imago/',
+      description='Open Civic Data API',
       long_description='',
       platforms=['any'],
+      install_requires=[
+          'pymongo>=2.5',
+          'Django>=1.5',
+      ],
 )
