@@ -294,7 +294,7 @@ class OrganizationList(JsonView):
                     'dissolution_date': None,
                     'jurisdiction_id': None,
                     'parent_id': None,
-                    'geography_id': None,
+                    'division_id': None,
                     'chamber': None,
                     'name': fuzzy_string_param,
                     'updated_at': time_param,
