@@ -207,16 +207,12 @@ class JsonView(View):
 
 class DetailView(JsonView):
 
-    def query_from_request(self, get_params, id):
-        return {'_id': id}
-
-    def get_data(self, get_params, *args, **kwargs):
+    def get_data(self, get_params, id):
         fields = self.fields_from_request(get_params)
-        query = self.query_from_request(get_params, *args, **kwargs)
-        result = self.collection.find_one(query, fields=fields)
+        result = self.collection.find_one({'_id': id}, fields=fields)
 
         if not result:
-            raise APIError('no such object: ' + query['_id'], 404)
+            raise APIError('no such object: ' + id, 404)
 
         return result
 
