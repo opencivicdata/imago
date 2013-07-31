@@ -5,6 +5,7 @@ import datetime
 from collections import defaultdict
 import pymongo
 from django.http import HttpResponse
+from django.conf import settings
 from django.views.generic.base import View
 from django.core.serializers.json import DateTimeAwareJSONEncoder
 from imago.core import db
@@ -61,23 +62,24 @@ class JsonView(View):
 
     Properties to set:
         collection - collection to query
-        find_one - use find_one instead of find in lookup
-            (optional - default False)
         default_fields - mongodb fields parameter if not specified
             (optional - defaults to all)
         per_page
             (optional- defaults to 100)
         query_params
             (optional defaults to [])
-        default_sort
+        sort_options
         default_subfields
     """
 
-    find_one = False
     default_fields = None
     per_page = 100
     query_params = {}
-    default_sort = [('created_at', pymongo.DESCENDING)]
+    sort_options = {
+        'default': [('created_at', pymongo.DESCENDING)],
+        'created_at': [('created_at', pymongo.DESCENDING)],
+        'updated_at': [('updated_at', pymongo.DESCENDING)]
+    }
     default_subfields = None
 
     def get(self, request, *args, **kwargs):
@@ -88,32 +90,6 @@ class JsonView(View):
             resp = {'error': str(e)}
             data = json.dumps(resp)
             return HttpResponse(data, status=e.status)
-
-        if not self.find_one:
-            total = data.count()
-
-            try:
-                per_page = _clamp(
-                    int(get_params.get('per_page', self.per_page)),
-                    1, self.per_page
-                )
-            except ValueError:
-                per_page = self.per_page
-
-            try:
-                page = _clamp(int(get_params.get('page', 0)),
-                              0, total/per_page)
-            except ValueError:
-                page = 0
-
-            data = list(data.skip(page*per_page).limit(per_page))
-            data = {'results': data, 'meta': {'page': page,
-                                              'per_page': per_page,
-                                              'count': len(data),
-                                              'total_count': total,
-                                              'max_page': total/per_page,
-                                             }
-                   }
 
         data = json.dumps(self._clean(data), cls=DateTimeAwareJSONEncoder,
                           ensure_ascii=False)
@@ -127,13 +103,45 @@ class JsonView(View):
 
     def get_data(self, get_params, *args, **kwargs):
         fields = self.fields_from_request(get_params)
-        sort = self.sort_from_request(get_params)
         query = self.query_from_request(get_params, *args, **kwargs)
-        result = self.collection.find(query, fields=fields)
+        sort = self.sort_options.get(get_params.get('sort', 'default'))
+        data = self.collection.find(query, fields=fields)
         if sort:
-            result = result.sort(sort)
+            data = data.sort(sort)
 
-        return result
+        total = data.count()
+
+        try:
+            per_page = _clamp(
+                int(get_params.get('per_page', self.per_page)),
+                1, self.per_page
+            )
+        except ValueError:
+            per_page = self.per_page
+
+        try:
+            page = _clamp(int(get_params.get('page', 0)),
+                          0, total/per_page)
+        except ValueError:
+            page = 0
+
+        data = list(data.skip(page*per_page).limit(per_page))
+        data = {'results': data, 'meta': {'page': page,
+                                          'per_page': per_page,
+                                          'count': len(data),
+                                          'total_count': total,
+                                          'max_page': total/per_page,
+                                         }
+               }
+
+        # debug stuff into meta
+        debug = 'debug' in get_params
+        if debug:
+            data['meta']['sort'] = sort
+            data['meta']['query'] = ''
+
+        return data
+
 
     def fields_from_request(self, get_params):
         fields = get_params.get('fields', None)
@@ -145,10 +153,6 @@ class JsonView(View):
             d['_id'] = d.pop('id', 1)
             d['_type'] = 1
             return d
-
-    def sort_from_request(self, get_params):
-        sort = get_params.get('sort', self.default_sort)
-        return sort
 
     def query_from_request(self, get_params, *args):
         query = {}
@@ -175,8 +179,9 @@ class JsonView(View):
             elif operator in ('all', 'in', 'nin'):
                 query[key] = {'$'+operator: value.split('|')}
             elif operator == 'id':
-                query['identifiers'] = {'scheme': key,
-                                        'identifier': value}
+                query['identifiers'] = {'$elemMatch':
+                                        {'scheme': key, 'identifier': value}
+                                       }
             else:
                 raise APIError('invalid operator: ' + operator)
 
@@ -201,7 +206,6 @@ class JsonView(View):
 
 
 class DetailView(JsonView):
-    find_one = True
 
     def query_from_request(self, get_params, id):
         return {'_id': id}
@@ -282,7 +286,9 @@ class VoteDetail(DetailView):
 class MetadataList(JsonView):
     collection = db.metadata
     default_fields = {'terms': 0, 'session_details': 0, 'chambers': 0}
-    default_sort = 'name'
+    sort_options = {
+        'default': [('name', pymongo.ASCENDING)]
+    }
 
 
 class OrganizationList(JsonView):
@@ -299,6 +305,7 @@ class OrganizationList(JsonView):
                     'name': fuzzy_string_param,
                     'updated_at': time_param,
                     'created_at': time_param}
+
 
 class PeopleList(JsonView):
     collection = db.people
