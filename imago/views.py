@@ -137,8 +137,8 @@ class JsonView(View):
         # debug stuff into meta
         debug = 'debug' in get_params
         if debug:
-            data['meta']['sort'] = sort
-            data['meta']['query'] = ''
+            data['meta']['mongo'] = {'sort': sort, 'fields': fields,
+                                     'query': query}
 
         return data
 
