@@ -8,17 +8,9 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.views.generic.base import View
 from django.core.serializers.json import DateTimeAwareJSONEncoder
-from imago.core import db
-
-
-class APIError(Exception):
-
-    def __init__(self, msg, status=400):
-        self.msg = msg
-        self.status = status
-
-    def __str__(self):
-        return str(self.msg)
+from .core import db
+from .exceptions import APIError
+from .utils import dict_to_mongo_query
 
 
 
@@ -155,37 +147,7 @@ class JsonView(View):
             return d
 
     def query_from_request(self, get_params, *args):
-        query = {}
-
-        for key, value in get_params.iteritems():
-            # if this is an operator query, get the key & operator
-            if '__' in key:
-                key, operator = key.split('__', 1)
-            else:
-                operator = None
-
-            # skip keys that aren't in query_params or ending with __id
-            if key in self.query_params:
-                param_func = self.query_params[key]
-                if param_func:
-                    value = param_func(value)
-            elif operator != 'id':
-                continue
-
-            if not operator:
-                query[key] = value
-            elif operator in ('gt', 'gte', 'lt', 'lte', 'ne'):
-                query[key] = {'$'+operator: value}
-            elif operator in ('all', 'in', 'nin'):
-                query[key] = {'$'+operator: value.split('|')}
-            elif operator == 'id':
-                query['identifiers'] = {'$elemMatch':
-                                        {'scheme': key, 'identifier': value}
-                                       }
-            else:
-                raise APIError('invalid operator: ' + operator)
-
-        return query
+        return dict_to_mongo_query(get_params, self.query_params)
 
     def _clean(self, obj):
         if isinstance(obj, dict):
@@ -374,7 +336,7 @@ class EventList(JsonView):
     sort_options = {
         'default': [('created_at', pymongo.DESCENDING)],
         'created_at': [('created_at', pymongo.DESCENDING)],
-        'updated_at': [('updated_at', pymongo.DESCENDING)]
+        'updated_at': [('updated_at', pymongo.DESCENDING)],
         'when': [('when', pymongo.DESCENDING)],
     }
 
@@ -394,6 +356,6 @@ class VoteList(JsonView):
     sort_options = {
         'default': [('created_at', pymongo.DESCENDING)],
         'created_at': [('created_at', pymongo.DESCENDING)],
-        'updated_at': [('updated_at', pymongo.DESCENDING)]
+        'updated_at': [('updated_at', pymongo.DESCENDING)],
         'date': [('date', pymongo.DESCENDING)],
     }
