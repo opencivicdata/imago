@@ -365,12 +365,18 @@ class EventList(JsonView):
     collection = db.events
     default_fields = {'sources': 0}
     query_params = {'jurisdiction_id': None,
-                    'when': time_param,
                     'participants.id': None,
                     'agenda.related_entities.id': None,
+                    'when': time_param,
                     'created_at': time_param,
                     'updated_at': time_param,
                    }
+    sort_options = {
+        'default': [('created_at', pymongo.DESCENDING)],
+        'created_at': [('created_at', pymongo.DESCENDING)],
+        'updated_at': [('updated_at', pymongo.DESCENDING)]
+        'when': [('when', pymongo.DESCENDING)],
+    }
 
 
 class VoteList(JsonView):
@@ -385,3 +391,9 @@ class VoteList(JsonView):
                     'bill.id': None,
                     'created_at': time_param,
                     'updated_at': time_param}
+    sort_options = {
+        'default': [('created_at', pymongo.DESCENDING)],
+        'created_at': [('created_at', pymongo.DESCENDING)],
+        'updated_at': [('updated_at', pymongo.DESCENDING)]
+        'date': [('date', pymongo.DESCENDING)],
+    }
