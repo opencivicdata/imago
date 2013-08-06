@@ -1,4 +1,6 @@
-from .core import db
+import pymongo
+from .core import db, elasticsearch
+from .exceptions import APIError
 
 def dict_to_mongo_query(params, allowed_fields):
     query = {}
@@ -36,9 +38,15 @@ class BillSearchResults(object):
     def __init__(self, es_search, mongo_query, sort, fields):
         self.es_search = es_search
         self.mongo_query = mongo_query
-        self.sort = sort
+        self.sort_field = sort
         self.fields = fields
         self._len = None
+        if sort in ('first', 'last', 'signed', 'passed_lower', 'passed_upper'):
+            self.sort_field = 'action_dates.' + sort
+        elif sort in ('updated_at', 'created_at'):
+            self.sort_field = sort
+        else:
+            self.sort_field = 'action_dates.last'
 
     def __len__(self):
         if not self._len:
@@ -74,13 +82,14 @@ class BillSearchResults(object):
 
         if self.es_search:
             search = dict(self.es_search)
-            search['sort'] = [{self.sort: 'desc'}, 'bill_id']
+            # TODO: change bill_id to name?
+            search['sort'] = [{self.sort_field: 'desc'}, 'bill_id']
             search['from'] = start
             search['size'] = stop-start
             es_result = elasticsearch.search(search, index='billy', doc_type='bills')
-            _mongo_query = {'_id': {'$in': [r['_id'] for r in es_result['hits']['hits']]}}
+            _mongo_query = {'identifiers.identifier': {'$in': [r['_id'] for r in es_result['hits']['hits']]}}
             return db.bills.find(_mongo_query, fields=self.fields).sort(
-                [(self.sort, pymongo.DESCENDING), ('name', pymongo.ASCENDING)]
+                [(self.sort_field, pymongo.DESCENDING), ('name', pymongo.ASCENDING)]
             )
         else:
             return db.bills.find(self.mongo_query, fields=self.fields).sort(
@@ -88,11 +97,10 @@ class BillSearchResults(object):
             ).skip(start).limit(stop-start)
 
 
-def bill_search(query, allowed_fields):
+def bill_search(query, allowed_fields, bill_fields, sort):
     use_elasticsearch = False
     mongo_filter = {}
     es_terms = []
-    sort = 'created_at'
 
     if 'q' in query:
         q = query['q']
@@ -103,7 +111,7 @@ def bill_search(query, allowed_fields):
             raise PermissionDenied('html detected')
 
         # pull out the fields
-        for key, value in params.iteritems():
+        for key, value in query.iteritems():
             if '__' in key:
                 key, operator = key.split('__', 1)
             else:
@@ -123,24 +131,21 @@ def bill_search(query, allowed_fields):
             elif operator == 'all':
                 for val in value.split(','):
                     es_terms.append({key: val})
-            elif operator in ('in', 'nin'):
+            elif operator == 'in':
                 query[key] = {'$'+operator: value.split(',')}
-            # TODO: ne, in, nin, id
-            #elif operator == 'id':
-            #    query['identifiers'] = {'$elemMatch': {'scheme': key,
-            #                                           'identifier': value}
-            #                           }
+            elif operator in ('id', 'ne', 'nin'):
+                raise APIError('cannot combine full text search and __%s operator' % operator)
             else:
                 raise APIError('invalid operator: ' + operator)
 
-            search = {'query': {'query_string': {'fields': ['text', 'title'],
-                                                 'default_operator': 'AND',
-                                                 'query': q}}}
-            if es_terms:
-                search['filter'] = {'and': es_terms}
-                search = {'query': {'filtered': search}}
-            search['fields'] = []
-            return BillSearchResults(search, None, sort, bill_fields)
+        search = {'query': {'query_string': {'fields': ['text', 'title'],
+                                             'default_operator': 'AND',
+                                             'query': q}}}
+        if es_terms:
+            search['filter'] = {'and': es_terms}
+            search = {'query': {'filtered': search}}
+        search['fields'] = []
+        return BillSearchResults(search, None, sort, bill_fields)
 
     else:
         mongo_filter = dict_to_mongo_query(query, allowed_fields)
