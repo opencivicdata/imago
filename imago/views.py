@@ -12,6 +12,10 @@ from .core import db
 from .exceptions import APIError
 from .utils import dict_to_mongo_query, bill_search
 
+if getattr(settings, 'USE_LOCKSMITH', False):
+    from locksmith.mongoauth.db import db as locksmith_db
+else:
+    locksmith_db = None
 
 
 def _clamp(val, _min, _max):
@@ -76,7 +80,12 @@ class JsonView(View):
 
     def get(self, request, *args, **kwargs):
         get_params = request.GET.copy()
+
         try:
+            if locksmith_db and (not hasattr(request, 'apikey') or
+                                 request.apikey['status'] != 'A'):
+                raise APIError('Authorization Required: obtain API key at ' +
+                               settings.LOCKSMITH_REGISTRATION_URL, status=401)
             data = self.get_data(get_params, *args, **kwargs)
         except APIError as e:
             resp = {'error': str(e)}
@@ -90,6 +99,12 @@ class JsonView(View):
         cb = get_params.get('callback', None)
         if cb:
             data = '{0}({1})'.format(cb, data)
+
+        if locksmith_db:
+            locksmith_db.logs.insert({'key': request.apikey['_id'],
+                                      'method': self.__class__.__name__,
+                                      'query_string': request.META['QUERY_STRING'],
+                                      'timestamp': datetime.datetime.utcnow()})
 
         return HttpResponse(data)
 
