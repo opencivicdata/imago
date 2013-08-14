@@ -15,5 +15,4 @@ setup(name='imago',
       install_requires=[
           'pymongo>=2.5',
           'Django>=1.5',
-      ],
-)
+      ])

@@ -1,6 +1,8 @@
 import pymongo
 from .core import db, elasticsearch
 from .exceptions import APIError
+from django.core.exceptions import PermissionDenied
+
 
 def dict_to_mongo_query(params, allowed_fields):
     query = {}
@@ -87,7 +89,8 @@ class BillSearchResults(object):
             search['from'] = start
             search['size'] = stop-start
             es_result = elasticsearch.search(search, index='billy', doc_type='bills')
-            _mongo_query = {'identifiers.identifier': {'$in': [r['_id'] for r in es_result['hits']['hits']]}}
+            _mongo_query = {'identifiers.identifier': {'$in': [r['_id'] for r in
+                                                               es_result['hits']['hits']]}}
             return db.bills.find(_mongo_query, fields=self.fields).sort(
                 [(self.sort_field, pymongo.DESCENDING), ('name', pymongo.ASCENDING)]
             )

@@ -1,8 +1,6 @@
 import re
 import json
-import copy
 import datetime
-from collections import defaultdict
 import pymongo
 from django.http import HttpResponse
 from django.conf import settings
@@ -128,11 +126,11 @@ class JsonView(View):
 
         try:
             page = _clamp(int(get_params.get('page', 0)),
-                          0, total/per_page)
+                          0, total / per_page)
         except ValueError:
             page = 0
 
-        data = list(data.skip(page*per_page).limit(per_page))
+        data = list(data.skip(page * per_page).limit(per_page))
         data = {'results': data, 'meta': {'page': page,
                                           'per_page': per_page,
                                           'count': len(data),
@@ -148,7 +146,6 @@ class JsonView(View):
                                      'query': query}
 
         return data
-
 
     def fields_from_request(self, get_params):
         fields = get_params.get('fields', None)
@@ -324,7 +321,8 @@ class BillList(JsonView):
     collection = db.bills
     default_fields = {'sponsors': 0, 'sources': 0, 'actions': 0,
                       'links': 0, 'versions': 0, 'related_bills': 0,
-                      'summaries': 0, 'other_titles': 0, 'documents': 0 }
+                      'summaries': 0, 'other_titles': 0, 'documents': 0
+                     }
     query_params = {'name': None,
                     'chamber': None,
                     'session': None,

@@ -7,5 +7,3 @@ class APIError(Exception):
 
     def __str__(self):
         return str(self.msg)
-
-
