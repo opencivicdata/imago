@@ -67,7 +67,7 @@ def fuzzy_string_param(param):
     return re.compile(r'\b{0}\b'.format(param), re.IGNORECASE)
 
 
-class TarballDumpList(View):
+class TarballDumpView(View):
 
     @staticmethod
     def generate_tarball(data):
@@ -75,7 +75,7 @@ class TarballDumpList(View):
             tf = TarFile(fileobj=output, mode='w')
             for path, datum in data:
                 with buffer() as string:
-                    json.dump(datum, string, cls=JSONEncoderPlus)
+                    json.dump(datum, string, cls=DateTimeAwareJSONEncoder)
                     info = TarInfo(name=path)
                     info.size = string.tell()
                     string.seek(0)
@@ -98,7 +98,7 @@ class TarballDumpList(View):
             return HttpResponse(data, status=e.status)
 
         # verify data is a [('filename', {}), ...]
-        data = TarballDumpList.generate_tarball(data)
+        data = TarballDumpView.generate_tarball(data)
 
         if locksmith_db:
             locksmith_db.logs.insert({'key': request.apikey['_id'],
@@ -108,48 +108,25 @@ class TarballDumpList(View):
 
         return HttpResponse(data)
 
-    def get_data(self, get_params):
-        fields = self.fields_from_request(get_params)
-        query = self.query_from_request(get_params)
-        sort = self.sort_options.get(get_params.get('sort', 'default'))
-        data = self.collection.find(query, fields=fields)
-        if sort:
-            data = data.sort(sort)
-
-        total = data.count()
-
-        try:
-            per_page = _clamp(
-                int(get_params.get('per_page', self.per_page)),
-                1, self.per_page
-            )
-        except ValueError:
-            per_page = self.per_page
-
-        try:
-            page = _clamp(int(get_params.get('page', 0)),
-                          0, total / per_page)
-        except ValueError:
-            page = 0
-
-        data = list(data.skip(page * per_page).limit(per_page))
-        data = {'results': data, 'meta': {'page': page,
-                                          'per_page': per_page,
-                                          'count': len(data),
-                                          'total_count': total,
-                                          'max_page': total/per_page,
-                                         }
-               }
-
-        # debug stuff into meta
-        debug = 'debug' in get_params
-        if debug:
-            data['meta']['mongo'] = {'sort': sort, 'fields': fields,
-                                     'query': query}
-
-        return data
+    def get_data(self, id, get_params):
+        return NotImplemented
 
 
+class JurisdictionDumpView(TarballDumpView):
+    def get_data(self, get_params, id):
+        spec = {"jurisdiction_id": id}
+
+        for collection in [
+            db.bills,
+            db.votes,
+            db.events,
+            db.organizations,
+        ]:
+            for entry in collection.find(spec, timeout=False):
+                yield ("{jurisdiction}/{id}".format(
+                    jurisdiction=entry['jurisdiction_id'],
+                    id=entry['_id']
+                ), entry)
 
 
 class JsonView(View):
