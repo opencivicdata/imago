@@ -1,19 +1,35 @@
 import re
 import json
 import datetime
+from tarfile import TarFile  # For tar view
 import pymongo
 from django.http import HttpResponse
 from django.conf import settings
-from django.views.generic.base import View
 from django.core.serializers.json import DateTimeAwareJSONEncoder
 from .core import db
 from .exceptions import APIError
 from .utils import dict_to_mongo_query, bill_search
+from django.views.generic import View
+
+
+from tarfile import TarFile, TarInfo
+from cStringIO import StringIO
+from contextlib import contextmanager
 
 if getattr(settings, 'USE_LOCKSMITH', False):
     from locksmith.mongoauth.db import db as locksmith_db
 else:
     locksmith_db = None
+
+
+@contextmanager
+def buffer():
+    s = StringIO()
+    try:
+        yield s
+    except:
+        s.close()
+        raise
 
 
 def _clamp(val, _min, _max):
@@ -49,6 +65,91 @@ def boolean_param(param):
 
 def fuzzy_string_param(param):
     return re.compile(r'\b{0}\b'.format(param), re.IGNORECASE)
+
+
+class TarballDumpList(View):
+
+    @staticmethod
+    def generate_tarball(data):
+        with buffer() as output:
+            tf = TarFile(fileobj=output, mode='w')
+            for path, datum in data:
+                with buffer() as string:
+                    json.dump(datum, string, cls=JSONEncoderPlus)
+                    info = TarInfo(name=path)
+                    info.size = string.tell()
+                    string.seek(0)
+                    tf.addfile(tarinfo=info, fileobj=string)
+            output.seek(0)
+            return output.getvalue()
+
+    def get(self, request, *args, **kwargs):
+        get_params = request.GET.copy()
+
+        try:
+            if locksmith_db and (not hasattr(request, 'apikey') or
+                                 request.apikey['status'] != 'A'):
+                raise APIError('Authorization Required: obtain API key at ' +
+                               settings.LOCKSMITH_REGISTRATION_URL, status=401)
+            data = self.get_data(get_params, *args, **kwargs)
+        except APIError as e:
+            resp = {'error': str(e)}
+            data = json.dumps(resp)
+            return HttpResponse(data, status=e.status)
+
+        # verify data is a [('filename', {}), ...]
+        data = TarballDumpList.generate_tarball(data)
+
+        if locksmith_db:
+            locksmith_db.logs.insert({'key': request.apikey['_id'],
+                                      'method': self.__class__.__name__,
+                                      'query_string': request.META['QUERY_STRING'],
+                                      'timestamp': datetime.datetime.utcnow()})
+
+        return HttpResponse(data)
+
+    def get_data(self, get_params):
+        fields = self.fields_from_request(get_params)
+        query = self.query_from_request(get_params)
+        sort = self.sort_options.get(get_params.get('sort', 'default'))
+        data = self.collection.find(query, fields=fields)
+        if sort:
+            data = data.sort(sort)
+
+        total = data.count()
+
+        try:
+            per_page = _clamp(
+                int(get_params.get('per_page', self.per_page)),
+                1, self.per_page
+            )
+        except ValueError:
+            per_page = self.per_page
+
+        try:
+            page = _clamp(int(get_params.get('page', 0)),
+                          0, total / per_page)
+        except ValueError:
+            page = 0
+
+        data = list(data.skip(page * per_page).limit(per_page))
+        data = {'results': data, 'meta': {'page': page,
+                                          'per_page': per_page,
+                                          'count': len(data),
+                                          'total_count': total,
+                                          'max_page': total/per_page,
+                                         }
+               }
+
+        # debug stuff into meta
+        debug = 'debug' in get_params
+        if debug:
+            data['meta']['mongo'] = {'sort': sort, 'fields': fields,
+                                     'query': query}
+
+        return data
+
+
 
 
 class JsonView(View):
