@@ -33,6 +33,9 @@ def iterate_members(jurisdictions):
             ), entry)
 
 
+
+
+
 def generate_tarball(data):
     with buffer() as output:
         tf = TarFile(fileobj=output, mode='w')
