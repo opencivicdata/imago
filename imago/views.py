@@ -115,11 +115,14 @@ class TarballDumpView(View):
 class JurisdictionDumpView(TarballDumpView):
     def get_data(self, get_params, id):
 
-        for meta in db.jurisdictions.find({"_id": {
+        metas = db.jurisdictions.find({"_id": {
             '$regex': '^%s' % (id)
-        }}):
-            spec = {"jurisdiction_id": meta['_id']}
+        }})
+        jurisdictions = [x['_id'] for x in metas]
 
+        spec = {"jurisdiction_id": {"$in": jurisdictions}}
+
+        for meta in metas:
             for x in [
                 'latest_json_url', 'latest_csv_url',
                 'latest_json_date', 'latest_csv_date'
@@ -135,39 +138,39 @@ class JurisdictionDumpView(TarballDumpView):
                 jurisdiction=meta['_id']
             ), meta)
 
-            for collection in [
-                db.bills,
-                db.votes,
-                db.events,
-                db.organizations,
-            ]:
-                for entry in collection.find(spec, timeout=False):
-                    yield ("{jurisdiction}/{id}".format(
-                        jurisdiction=entry['jurisdiction_id'],
-                        id=entry['_id']
-                    ), entry)
+        for collection in [
+            db.bills,
+            db.votes,
+            db.events,
+            db.organizations,
+        ]:
+            for entry in collection.find(spec, timeout=False):
+                yield ("{jurisdiction}/{id}".format(
+                    jurisdiction=entry['jurisdiction_id'],
+                    id=entry['_id']
+                ), entry)
 
-            for orga in db.organizations.find({"jurisdiction_id": meta['_id'],
-                                               "classification": "legislature"}):
-
-                for membership in db.memberships.find({
-                    "organization_id": orga['_id']
-                }, timeout=False):
-                    person = db.people.find_one({"_id": membership['person_id']})
-
-                    data = list(db.memberships.find({  # XXX: Ugh...
-                        "person_id": person['_id']
-                    }, timeout=False))
-
-                    for datum in data:
-                        datum.pop('_id')
-
-                    person['memberships'] = data
-
-                    yield ("{jurisdiction}/{id}".format(
-                        jurisdiction=meta['_id'],
-                        id=person['_id']
-                    ), person)
+#        for orga in db.organizations.find({"jurisdiction_id": meta['_id'],
+#                                           "classification": "legislature"}):
+#
+#            for membership in db.memberships.find({
+#                "organization_id": orga['_id']
+#            }, timeout=False):
+#                person = db.people.find_one({"_id": membership['person_id']})
+#
+#                data = list(db.memberships.find({  # XXX: Ugh...
+#                    "person_id": person['_id']
+#                }, timeout=False))
+#
+#                for datum in data:
+#                    datum.pop('_id')
+#
+#                person['memberships'] = data
+#
+#                yield ("{jurisdiction}/{id}".format(
+#                    jurisdiction=meta['_id'],
+#                    id=person['_id']
+#                ), person)
 
 
 class JsonView(View):
