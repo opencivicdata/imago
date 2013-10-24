@@ -226,7 +226,7 @@ class JsonView(View):
                                       'query_string': request.META['QUERY_STRING'],
                                       'timestamp': datetime.datetime.utcnow()})
 
-        return HttpResponse(data)
+        return HttpResponse(data, mimetype='application/json')
 
     def get_data(self, get_params):
         fields = self.fields_from_request(get_params)
