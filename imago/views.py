@@ -108,15 +108,24 @@ class JsonView(View):
 
         return HttpResponse(data, mimetype='application/json')
 
-    def get_data(self, get_params):
+    def get_page(self, data, page, per_page):
+        """ return a single page - Mongo specific """
+        return list(data.skip(page * per_page).limit(per_page))
+
+    def do_query(self, get_params):
+        """ return data, count, extra_meta """
         fields = self.fields_from_request(get_params)
         query = self.query_from_request(get_params)
         sort = self.sort_options.get(get_params.get('sort', 'default'))
         data = self.collection.find(query, fields=fields)
         if sort:
             data = data.sort(sort)
+            return data, data.count(), {'mongo':
+                                        {'sort': sort, 'fields': fields, 'query': query}
+                                       }
 
-        total = data.count()
+    def get_data(self, get_params):
+        data, total, extra_meta = self.do_query(get_params)
 
         try:
             per_page = _clamp(
@@ -132,7 +141,7 @@ class JsonView(View):
         except ValueError:
             page = 0
 
-        data = list(data.skip(page * per_page).limit(per_page))
+        data = self.get_page(data, page, per_page)
         data = {'results': data, 'meta': {'page': page,
                                           'per_page': per_page,
                                           'count': len(data),
@@ -142,10 +151,8 @@ class JsonView(View):
                }
 
         # debug stuff into meta
-        debug = 'debug' in get_params
-        if debug:
-            data['meta']['mongo'] = {'sort': sort, 'fields': fields,
-                                     'query': query}
+        if 'debug' in get_params:
+            data['meta'].update(extra_meta)
 
         return data
 
@@ -337,44 +344,18 @@ class BillList(JsonView):
     # TODO: other_names (everywhere)
     # TODO: title search, search_window
 
-    def get_data(self, get_params):
+    def get_page(self, data, page, per_page):
+        return list(bill_results[page*per_page:page*per_page+per_page])
+
+    def do_query(self, get_params):
         fields = self.fields_from_request(get_params)
         sort = get_params.get('sort', 'default')
         bill_results = bill_search(get_params, self.query_params, fields, sort)
 
-        total = len(bill_results)
+        extra = {'mongo': {'sort': sort, 'fields': fields, 'query': bill_results.mongo_query},
+                 'elasticsearch': bill_results.es_search}
 
-        try:
-            per_page = _clamp(
-                int(get_params.get('per_page', self.per_page)),
-                1, self.per_page
-            )
-        except ValueError:
-            per_page = self.per_page
-
-        try:
-            page = _clamp(int(get_params.get('page', 0)),
-                          0, total/per_page)
-        except ValueError:
-            page = 0
-
-        data = list(bill_results[page*per_page:page*per_page+per_page])
-        data = {'results': data, 'meta': {'page': page,
-                                          'per_page': per_page,
-                                          'count': len(data),
-                                          'total_count': total,
-                                          'max_page': total/per_page,
-                                         }
-               }
-
-        # debug stuff into meta
-        debug = 'debug' in get_params
-        if debug:
-            data['meta']['mongo'] = {'sort': sort, 'fields': fields,
-                                     'query': bill_results.mongo_query}
-            data['meta']['elasticsearch'] = bill_results.es_search
-
-        return data
+        return bill_results, len(bill_results), extra
 
 
 class EventList(JsonView):
@@ -416,7 +397,13 @@ class VoteList(JsonView):
 
 
 class DivisionList(JsonView):
-    def get_data(self, get_params):
+    def get_page(self, data, page, per_page):
+        """ apply pagnation and make objects """
+        data = data[page*per_page:(page+1)*per_page]
+        data = [{'id': d.id, 'country': d.country, 'display_name': d.display_name} for d in data]
+        return data
+
+    def do_query(self, get_params):
         fields = self.fields_from_request(get_params)
         lat = get_params.get('lat')
         lon = get_params.get('lon')
@@ -434,40 +421,7 @@ class DivisionList(JsonView):
         elif lat or lon:
             raise APIError('must specify lat & lon together')
 
-        total = data.count()
-        try:
-            per_page = _clamp(
-                int(get_params.get('per_page', self.per_page)),
-                1, self.per_page
-            )
-        except ValueError:
-            per_page = self.per_page
-
-        try:
-            page = _clamp(int(get_params.get('page', 0)),
-                          0, total / per_page)
-        except ValueError:
-            page = 0
-
-        # apply pagination & make objects
-        data = data[page*per_page:(page+1)*per_page]
-        data = [{'id': d.id, 'country': d.country, 'display_name': d.display_name} for d in data]
-
-        data = {'results': data, 'meta': {'page': page,
-                                          'per_page': per_page,
-                                          'count': len(data),
-                                          'total_count': total,
-                                          'max_page': total/per_page,
-                                         }
-               }
-
-        debug = 'debug' in get_params
-        # TODO: add debug stuff into meta
-        #if debug:
-        #    data['meta']['mongo'] = {'sort': sort, 'fields': fields,
-        #                             'query': query}
-
-        return data
+        return data, data.count(), {}
 
 class DivisionDetail(JsonView):
 
