@@ -96,7 +96,7 @@ class BillSearchResults(object):
             )
         else:
             return db.bills.find(self.mongo_query, fields=self.fields).sort(
-                [(self.sort, pymongo.DESCENDING)]
+                [(self.sort_field, pymongo.DESCENDING)]
             ).skip(start).limit(stop-start)
 
 
