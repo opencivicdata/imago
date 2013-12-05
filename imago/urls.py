@@ -10,10 +10,14 @@ from imago.views import (MetadataList,
                          PersonDetail,
                          BillDetail,
                          EventDetail,
-                         VoteDetail)
+                         VoteDetail,
+                         DivisionList,
+                         DivisionDetail,
+                        )
 
 urlpatterns = patterns(
     '',
+    (r'^divisions/$', DivisionList.as_view()),
     (r'^jurisdictions/$', MetadataList.as_view()),
     (r'^organizations/$', OrganizationList.as_view()),
     (r'^people/$', PeopleList.as_view()),
@@ -22,6 +26,7 @@ urlpatterns = patterns(
     (r'^votes/$', VoteList.as_view()),
 
     # detail views
+    (r'^(?P<id>ocd-division/.*)/$', DivisionDetail.as_view()),
     (r'^(?P<id>ocd-jurisdiction/.+)/$', MetadataDetail.as_view()),
     (r'^(?P<id>ocd-organization/[0-9a-f-]+)/$', OrganizationDetail.as_view()),
     (r'^(?P<id>ocd-person/[0-9a-f-]+)/$', PersonDetail.as_view()),

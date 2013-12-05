@@ -6,9 +6,11 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.views.generic.base import View
 from django.core.serializers.json import DateTimeAwareJSONEncoder
+from django.db.models import Q
 from .core import db
 from .exceptions import APIError
 from .utils import dict_to_mongo_query, bill_search
+from .models import Division
 
 if getattr(settings, 'USE_LOCKSMITH', False):
     from locksmith.mongoauth.db import db as locksmith_db
@@ -411,3 +413,80 @@ class VoteList(JsonView):
         'updated_at': [('updated_at', pymongo.DESCENDING)],
         'date': [('date', pymongo.DESCENDING)],
     }
+
+
+class DivisionList(JsonView):
+    def get_data(self, get_params):
+        fields = self.fields_from_request(get_params)
+        lat = get_params.get('lat')
+        lon = get_params.get('lon')
+        date = time_param(get_params.get('date', 'now'))
+
+        data = Division.objects.filter(
+            Q(geometries__temporal_set__end__gte=date) |
+            Q(geometries__temporal_set__end=None),
+            geometries__temporal_set__start__lte=date,
+        ).order_by('id')
+
+        if lat and lon:
+            point = 'POINT(%s %s)' % (lon, lat)
+            data = data.filter(geometries__boundary__shape__contains=point)
+        elif lat or lon:
+            raise APIError('must specify lat & lon together')
+
+        total = data.count()
+        try:
+            per_page = _clamp(
+                int(get_params.get('per_page', self.per_page)),
+                1, self.per_page
+            )
+        except ValueError:
+            per_page = self.per_page
+
+        try:
+            page = _clamp(int(get_params.get('page', 0)),
+                          0, total / per_page)
+        except ValueError:
+            page = 0
+
+        # apply pagination & make objects
+        data = data[page*per_page:(page+1)*per_page]
+        data = [{'id': d.id, 'country': d.country, 'display_name': d.display_name} for d in data]
+
+        data = {'results': data, 'meta': {'page': page,
+                                          'per_page': per_page,
+                                          'count': len(data),
+                                          'total_count': total,
+                                          'max_page': total/per_page,
+                                         }
+               }
+
+        debug = 'debug' in get_params
+        # TODO: add debug stuff into meta
+        #if debug:
+        #    data['meta']['mongo'] = {'sort': sort, 'fields': fields,
+        #                             'query': query}
+
+        return data
+
+class DivisionDetail(JsonView):
+
+    def get_data(self, get_params, id):
+        try:
+            obj = Division.objects.get(id=id)
+        except Division.DoesNotExist:
+            raise APIError('no such object: ' + id, 404)
+
+        response = {"id": obj.id,
+                    "country": obj.country,
+                    "display_name": obj.display_name
+                   }
+        response['children'] = [{"id": d.id, "display_name": d.display_name}
+                                for d in Division.objects.children_of(id)]
+        response['geometries'] = [
+            {'start': dg.temporal_set.start.strftime('%Y-%m-%d'),
+             'end': dg.temporal_set.end.strftime('%Y-%m-%d') if dg.temporal_set.end else None,
+             'boundary': dg.boundary.as_dict()
+            } for dg in obj.geometries.all()]
+
+        return response
