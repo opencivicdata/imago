@@ -314,7 +314,7 @@ class PeopleList(JsonView):
                          member_of.split(',')]
         elif ever_member_of:
             mem_specs = [{'organization_id': _id} for _id in
-                         member_of.split(',')]
+                         ever_member_of.split(',')]
 
         # intersection of resulting ids from multiple subqueries
         if mem_specs:
