@@ -345,7 +345,7 @@ class BillList(JsonView):
     # TODO: title search, search_window
 
     def get_page(self, data, page, per_page):
-        return list(bill_results[page*per_page:page*per_page+per_page])
+        return list(data[page*per_page:page*per_page+per_page])
 
     def do_query(self, get_params):
         fields = self.fields_from_request(get_params)
