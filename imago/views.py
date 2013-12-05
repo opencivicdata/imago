@@ -404,7 +404,6 @@ class DivisionList(JsonView):
         return data
 
     def do_query(self, get_params):
-        fields = self.fields_from_request(get_params)
         lat = get_params.get('lat')
         lon = get_params.get('lon')
         date = time_param(get_params.get('date', 'now'))
@@ -422,6 +421,7 @@ class DivisionList(JsonView):
             raise APIError('must specify lat & lon together')
 
         return data, data.count(), {}
+
 
 class DivisionDetail(JsonView):
 
