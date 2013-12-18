@@ -33,7 +33,7 @@ def dict_to_mongo_query(params, allowed_fields):
         else:
             raise APIError('invalid operator: ' + operator)
 
-        return query
+    return query
 
 
 class BillSearchResults(object):
