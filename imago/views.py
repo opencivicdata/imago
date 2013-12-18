@@ -200,8 +200,8 @@ class DetailView(JsonView):
         return result
 
 
-class MetadataDetail(DetailView):
-    collection = db.metadata
+class JurisdictionDetail(DetailView):
+    collection = db.jurisdictions
 
 
 class OrganizationDetail(DetailView):
@@ -262,8 +262,8 @@ class VoteDetail(DetailView):
     collection = db.votes
 
 
-class MetadataList(JsonView):
-    collection = db.metadata
+class JurisdictionList(JsonView):
+    collection = db.jurisdictions
     default_fields = {'terms': 0, 'session_details': 0, 'chambers': 0}
     sort_options = {
         'default': [('name', pymongo.ASCENDING)]
