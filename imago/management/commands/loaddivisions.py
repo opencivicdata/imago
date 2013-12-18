@@ -42,8 +42,8 @@ class Command(BaseCommand):
                     args['subid%s' % n] = id_
                     n += 1
 
-                Division.objects.create(id=ocd_id,
-                                        display_name=name.decode('latin1'),
-                                        country=country, **args)
+                d = Division(id=ocd_id, display_name=name.decode('latin1'), country=country, **args)
+                d.save()
+
                 count += 1
             print count, 'objects'
