@@ -16,4 +16,5 @@ setup(name='imago',
           'pyelasticsearch>=0.6',
           'pymongo>=2.5',
           'Django>=1.5',
+          'represent-boundaries>=0.1',
       ])
