@@ -27,9 +27,7 @@ def dict_to_mongo_query(params, allowed_fields):
         elif operator in ('all', 'in', 'nin'):
             query[key] = {'$'+operator: value.split(',')}
         elif operator == 'id':
-            query['identifiers'] = {'$elemMatch': {'scheme': key,
-                                                   'identifier': value}
-                                   }
+            query['identifiers'] = {'$elemMatch': {'scheme': key, 'identifier': value} }
         else:
             raise APIError('invalid operator: ' + operator)
 

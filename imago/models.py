@@ -73,8 +73,7 @@ class TemporalSet(models.Model):
     end = models.DateTimeField(null=True)
 
     def __unicode__(self):
-        return '{0} ({1}-{2})'.format(self.boundary_set, self.start,
-                                      self.end or '')
+        return '{0} ({1}-{2})'.format(self.boundary_set, self.start, self.end or '')
 
 
 class DivisionGeometry(models.Model):
@@ -83,5 +82,4 @@ class DivisionGeometry(models.Model):
     boundary = models.ForeignKey(Boundary, related_name='geometries')
 
     def __unicode__(self):
-        return '{0} - {1} - {2}'.format(self.division, self.temporal_set,
-                                        self.boundary)
+        return '{0} - {1} - {2}'.format(self.division, self.temporal_set, self.boundary)
