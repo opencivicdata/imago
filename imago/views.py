@@ -5,7 +5,9 @@ import pymongo
 from django.http import HttpResponse
 from django.conf import settings
 from django.views.generic.base import View
+from django.shortcuts import redirect
 from django.core.serializers.json import DateTimeAwareJSONEncoder
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from .core import db
 from .exceptions import APIError
@@ -91,6 +93,9 @@ class JsonView(View):
             resp = {'error': str(e)}
             data = json.dumps(resp)
             return HttpResponse(data, status=e.status)
+
+        if isinstance(data, HttpResponse):
+            return data
 
         data = json.dumps(self._clean(data), cls=DateTimeAwareJSONEncoder,
                           ensure_ascii=False)
@@ -427,14 +432,14 @@ class DivisionDetail(JsonView):
 
     def get_data(self, get_params, id):
         try:
-            obj = Division.objects.get(id=id)
+            obj = Division.objects.get(pk=id)
         except Division.DoesNotExist:
             raise APIError('no such object: ' + id, 404)
 
-        response = {"id": obj.id,
-                    "country": obj.country,
-                    "display_name": obj.display_name
-                   }
+        if obj.redirect_id:
+            return redirect(reverse('division', args=(obj.redirect_id,)))
+
+        response = {"id": obj.id, "country": obj.country, "display_name": obj.display_name}
         response['children'] = [{"id": d.id, "display_name": d.display_name}
                                 for d in Division.objects.children_of(id)]
         response['geometries'] = [

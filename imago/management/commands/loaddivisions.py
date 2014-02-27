@@ -3,41 +3,60 @@ import urllib2
 from datetime import datetime
 from optparse import make_option
 
+from django.db import transaction
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from ...models import Division, DivisionGeometry, TemporalSet
 
 OCDID_URL = 'https://raw.github.com/opencivicdata/ocd-division-ids/master/'
 
+def _ocd_id_to_args(ocd_id):
+    pieces = ocd_id.split('/')
+    if pieces.pop(0) != 'ocd-division':
+        raise Exception('ID must start with ocd-division/')
+    country = pieces.pop(0)
+    if not country.startswith('country:'):
+        raise Exception('Second part of ID must be country:')
+    else:
+        country = country.replace('country:', "")
+    n = 1
+    args = {'country': country}
+    for piece in pieces:
+        type_, id_ = piece.split(':')
+        args['subtype%s' % n] = type_
+        args['subid%s' % n] = id_
+        n += 1
+    return args
+
 def load_divisions(clear=False):
-    if clear:
-        Division.objects.all().delete()
+    with transaction.atomic():
+        print('deleting all divisions...')
+        if clear:
+            Division.objects.all().delete()
 
-    url = OCDID_URL + 'identifiers/country-{}.csv'.format(settings.IMAGO_COUNTRY)
+        # country csv
+        count = 0
+        url = OCDID_URL + 'identifiers/country-{}.csv'.format(settings.IMAGO_COUNTRY)
+        print('loading ' + url)
+        for ocd_id, name in csv.reader(urllib2.urlopen(url)):
+            args = _ocd_id_to_args(ocd_id)
+            d = Division(id=ocd_id, display_name=name.decode('latin1'), **args)
+            d.save()
+            count += 1
+        print count, 'divisions'
 
-    count = 0
-    for ocd_id, name in csv.reader(urllib2.urlopen(url)):
-        pieces = ocd_id.split('/')
-        if pieces.pop(0) != 'ocd-division':
-            raise Exception('ID must start with ocd-division/')
-        country = pieces.pop(0)
-        if not country.startswith('country:'):
-            raise Exception('Second part of ID must be country:')
-        else:
-            country = country.replace('country:', "")
-        n = 1
-        args = {}
-        for piece in pieces:
-            type_, id_ = piece.split(':')
-            args['subtype%s' % n] = type_
-            args['subid%s' % n] = id_
-            n += 1
+        # exceptions
+        count = 0
+        url = OCDID_URL + 'identifiers/country-{}/exceptions.txt'.format(settings.IMAGO_COUNTRY)
+        print('loading ' + url)
+        for ocd_id, redirect_id, reason in csv.reader(urllib2.urlopen(url)):
+            name = '[redirect] ' + reason.decode('latin1')
+            args = _ocd_id_to_args(ocd_id)
+            d = Division(id=ocd_id, redirect_id=redirect_id, display_name=name, **args)
+            d.save()
+            count += 1
+        print count, 'redirects'
 
-        d = Division(id=ocd_id, display_name=name.decode('latin1'), country=country, **args)
-        d.save()
-
-        count += 1
-    print count, 'divisions'
 
 
 def load_mapping(boundary_set_id, start, url, end=None):

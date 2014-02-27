@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.core.urlresolvers import reverse
 from boundaries.models import BoundarySet, Boundary
 
 
@@ -47,6 +48,8 @@ class Division(models.Model):
     id = models.CharField(max_length=300, primary_key=True)
     display_name = models.CharField(max_length=300)
     country = models.CharField(max_length=2)
+    redirect = models.ForeignKey('self', null=True)
+
     # up to 7 pieces of the id that are searchable
     subtype1 = models.CharField(max_length=50, null=True, blank=True)
     subid1 = models.CharField(max_length=100, null=True, blank=True)
@@ -65,6 +68,9 @@ class Division(models.Model):
 
     def __unicode__(self):
         return '{0} ({1})'.format(self.display_name, self.id)
+
+    def get_absolute_url(self):
+        return reverse('division', args=(self.id,))
 
 
 class TemporalSet(models.Model):
