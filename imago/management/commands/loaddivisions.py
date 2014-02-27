@@ -30,8 +30,8 @@ def _ocd_id_to_args(ocd_id):
 
 def load_divisions(clear=False):
     with transaction.atomic():
-        print('deleting all divisions...')
         if clear:
+            print('deleting all divisions...')
             Division.objects.all().delete()
 
         # country csv
@@ -47,15 +47,19 @@ def load_divisions(clear=False):
 
         # exceptions
         count = 0
-        url = OCDID_URL + 'identifiers/country-{}/exceptions.txt'.format(settings.IMAGO_COUNTRY)
+        url = OCDID_URL + 'identifiers/country-{}/exceptions.csv'.format(settings.IMAGO_COUNTRY)
         print('loading ' + url)
-        for ocd_id, redirect_id, reason in csv.reader(urllib2.urlopen(url)):
-            name = '[redirect] ' + reason.decode('latin1')
-            args = _ocd_id_to_args(ocd_id)
-            d = Division(id=ocd_id, redirect_id=redirect_id, display_name=name, **args)
-            d.save()
-            count += 1
-        print count, 'redirects'
+        try:
+            for ocd_id, redirect_id, reason in csv.reader(urllib2.urlopen(url)):
+                name = '[redirect] ' + reason.decode('latin1')
+                args = _ocd_id_to_args(ocd_id)
+                d = Division(id=ocd_id, redirect_id=redirect_id, display_name=name, **args)
+                d.save()
+                count += 1
+            print count, 'redirects'
+        except urllib2.HTTPError:
+            print('no exceptions')
+            pass
 
 
 
