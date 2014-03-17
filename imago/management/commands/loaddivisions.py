@@ -15,7 +15,6 @@ LOCAL_REPO = '/tmp/ocdids'
 
 def checkout_repo():
     if os.path.exists(LOCAL_REPO):
-        #check_call(['rm', '-rf', LOCAL_REPO])
         cwd = os.getcwd()
         os.chdir(LOCAL_REPO)
         check_call(['git', 'pull'])
@@ -62,13 +61,13 @@ def load_divisions(clear=False):
         print(count, 'divisions')
 
 
-def load_mapping(boundary_set_id, start, url, end=None):
+def load_mapping(boundary_set_id, start, key, end=None):
     geoid_mapping = {}
-    if not url.startswith('http'):
-        url = OCDID_URL + 'mappings/' + url
-    print(boundary_set_id, url)
-    for ocd_id, geo_id in csv.reader(urllib2.urlopen(url)):
-        geoid_mapping[geo_id] = ocd_id
+    filename = os.path.join(LOCAL_REPO, 'identifiers',
+                            'country-{}.csv'.format(settings.IMAGO_COUNTRY))
+    for row in csv.DictReader(open(filename)):
+        if row[key]:
+            geoid_mapping[row[key]] = row['id']
 
     # delete temporal set & mappings if they exist
     tset = TemporalSet.objects.filter(boundary_set_id=boundary_set_id)
@@ -99,5 +98,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         checkout_repo()
         load_divisions(options['clear'])
-        #for set_id, d in settings.IMAGO_BOUNDARY_MAPPINGS.items():
-        #    load_mapping(set_id, **d)
+        for set_id, d in settings.IMAGO_BOUNDARY_MAPPINGS.items():
+            load_mapping(set_id, **d)
