@@ -1,14 +1,28 @@
+from __future__ import print_function
+import os
 import csv
-import urllib2
 from datetime import datetime
 from optparse import make_option
+from subprocess import check_call
 
 from django.db import transaction
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from ...models import Division, DivisionGeometry, TemporalSet
 
-OCDID_URL = 'https://raw.github.com/opencivicdata/ocd-division-ids/master/'
+OCDID_REPO = 'https://github.com/opencivicdata/ocd-division-ids.git'
+LOCAL_REPO = '/tmp/ocdids'
+
+def checkout_repo():
+    if os.path.exists(LOCAL_REPO):
+        #check_call(['rm', '-rf', LOCAL_REPO])
+        cwd = os.getcwd()
+        os.chdir(LOCAL_REPO)
+        check_call(['git', 'pull'])
+        os.chdir(cwd)
+    else:
+        check_call(['git', 'clone', OCDID_REPO, LOCAL_REPO])
+
 
 def _ocd_id_to_args(ocd_id):
     pieces = ocd_id.split('/')
@@ -36,31 +50,16 @@ def load_divisions(clear=False):
 
         # country csv
         count = 0
-        url = OCDID_URL + 'identifiers/country-{}.csv'.format(settings.IMAGO_COUNTRY)
-        print('loading ' + url)
-        for ocd_id, name in csv.reader(urllib2.urlopen(url)):
-            args = _ocd_id_to_args(ocd_id)
-            d = Division(id=ocd_id, display_name=name.decode('latin1'), **args)
+        filename = os.path.join(LOCAL_REPO, 'identifiers',
+                                'country-{}.csv'.format(settings.IMAGO_COUNTRY))
+        print('loading ' + filename)
+        for row in csv.DictReader(open(filename)):
+            args = _ocd_id_to_args(row['id'])
+            args['redirect_id'] = row.get('sameAs', '')
+            d = Division(id=row['id'], display_name=row['name'].decode('latin1'), **args)
             d.save()
             count += 1
-        print count, 'divisions'
-
-        # exceptions
-        count = 0
-        url = OCDID_URL + 'identifiers/country-{}/exceptions.csv'.format(settings.IMAGO_COUNTRY)
-        print('loading ' + url)
-        try:
-            for ocd_id, redirect_id, reason in csv.reader(urllib2.urlopen(url)):
-                name = '[redirect] ' + reason.decode('latin1')
-                args = _ocd_id_to_args(ocd_id)
-                d = Division(id=ocd_id, redirect_id=redirect_id, display_name=name, **args)
-                d.save()
-                count += 1
-            print count, 'redirects'
-        except urllib2.HTTPError:
-            print('no exceptions')
-            pass
-
+        print(count, 'divisions')
 
 
 def load_mapping(boundary_set_id, start, url, end=None):
@@ -86,7 +85,7 @@ def load_mapping(boundary_set_id, start, url, end=None):
             DivisionGeometry.objects.create(division_id=ocd_id, temporal_set=tset,
                                             boundary=boundary)
         else:
-            print 'unmatched external id', boundary, boundary.external_id
+            print('unmatched external id', boundary, boundary.external_id)
 
 
 class Command(BaseCommand):
@@ -98,6 +97,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        checkout_repo()
         load_divisions(options['clear'])
-        for set_id, d in settings.IMAGO_BOUNDARY_MAPPINGS.items():
-            load_mapping(set_id, **d)
+        #for set_id, d in settings.IMAGO_BOUNDARY_MAPPINGS.items():
+        #    load_mapping(set_id, **d)
