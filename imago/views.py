@@ -401,14 +401,26 @@ class VoteList(JsonView):
     }
 
 
+class DivisionBaseView(JsonView):
+    """ these views do Django ORM queries so fields_from_request is different """
+    def fields_from_request(self, get_params):
+        fields = get_params.get('fields', None)
+
+        if not fields:
+            return self.default_fields
+        else:
+            return fields.split(',')
+
+
 class DivisionList(JsonView):
+    default_fields = ('country', 'display_name', 'id')
+
     def get_page(self, data, page, per_page):
         """ apply pagnation and make objects """
-        data = data[page*per_page:(page+1)*per_page]
-        data = [{'id': d.id, 'country': d.country, 'display_name': d.display_name} for d in data]
-        return data
+        return list(data[page*per_page:(page+1)*per_page])
 
     def do_query(self, get_params):
+        fields = self.fields_from_request(get_params)
         lat = get_params.get('lat')
         lon = get_params.get('lon')
         date = time_param(get_params.get('date', 'now'))
@@ -417,7 +429,7 @@ class DivisionList(JsonView):
             Q(geometries__temporal_set__end__gte=date) |
             Q(geometries__temporal_set__end=None),
             geometries__temporal_set__start__lte=date,
-        ).order_by('id')
+        ).values(*fields).order_by('id')
 
         if lat and lon:
             point = 'POINT(%s %s)' % (lon, lat)
@@ -430,7 +442,10 @@ class DivisionList(JsonView):
 
 class DivisionDetail(JsonView):
 
+    default_fields = ('id', 'country', 'display_name', 'children', 'geometries')
+
     def get_data(self, get_params, id):
+        fields = self.fields_from_request(get_params)
         try:
             obj = Division.objects.get(pk=id)
         except Division.DoesNotExist:
@@ -439,13 +454,18 @@ class DivisionDetail(JsonView):
         if obj.redirect_id:
             return redirect(reverse('division', args=(obj.redirect_id,)))
 
-        response = {"id": obj.id, "country": obj.country, "display_name": obj.display_name}
-        response['children'] = [{"id": d.id, "display_name": d.display_name}
-                                for d in Division.objects.children_of(id)]
-        response['geometries'] = [
-            {'start': dg.temporal_set.start.strftime('%Y-%m-%d'),
-             'end': dg.temporal_set.end.strftime('%Y-%m-%d') if dg.temporal_set.end else None,
-             'boundary': dg.boundary.as_dict()
-            } for dg in obj.geometries.all()]
+        response = {}
+        for field in ('id', 'country', 'display_name'):
+            if field in fields:
+                response[field] = getattr(obj, field)
+        if 'children' in fields:
+            response['children'] = [{"id": d.id, "display_name": d.display_name}
+                                    for d in Division.objects.children_of(id)]
+        if 'geometries' in fields:
+            response['geometries'] = [
+                {'start': dg.temporal_set.start.strftime('%Y-%m-%d'),
+                 'end': dg.temporal_set.end.strftime('%Y-%m-%d') if dg.temporal_set.end else None,
+                 'boundary': dg.boundary.as_dict()
+                } for dg in obj.geometries.all()]
 
         return response
