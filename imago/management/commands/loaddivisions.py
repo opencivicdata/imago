@@ -1,4 +1,5 @@
 from __future__ import print_function
+import re
 import os
 import csv
 from datetime import datetime
@@ -61,13 +62,18 @@ def load_divisions(clear=False):
         print(count, 'divisions')
 
 
-def load_mapping(boundary_set_id, start, key, end=None):
+def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None):
+    if ignore:
+        ignore = re.compile(ignore)
+    ignored = 0
     geoid_mapping = {}
     filename = os.path.join(LOCAL_REPO, 'identifiers',
                             'country-{}.csv'.format(settings.IMAGO_COUNTRY))
     for row in csv.DictReader(open(filename)):
         if row[key]:
             geoid_mapping[row[key]] = row['id']
+
+    print('processing', boundary_set_id)
 
     # delete temporal set & mappings if they exist
     tset = TemporalSet.objects.filter(boundary_set_id=boundary_set_id)
@@ -79,12 +85,17 @@ def load_mapping(boundary_set_id, start, key, end=None):
     # create temporal set
     tset = TemporalSet.objects.create(boundary_set_id=boundary_set_id, start=start, end=end)
     for boundary in tset.boundary_set.boundaries.all():
-        ocd_id = geoid_mapping.get(boundary.external_id)
+        ocd_id = geoid_mapping.get(prefix+boundary.external_id)
         if ocd_id:
             DivisionGeometry.objects.create(division_id=ocd_id, temporal_set=tset,
                                             boundary=boundary)
-        else:
+        elif not ignore or not ignore.match(boundary.name):
             print('unmatched external id', boundary, boundary.external_id)
+        else:
+            ignored += 1
+
+    if ignored:
+        print('ignored {} unmatched external ids'.format(ignored))
 
 
 class Command(BaseCommand):
