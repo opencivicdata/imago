@@ -56,7 +56,7 @@ def load_divisions(clear=False):
         for row in csv.DictReader(open(filename)):
             args = _ocd_id_to_args(row['id'])
             args['redirect_id'] = row.get('sameAs', '')
-            d = Division(id=row['id'], display_name=row['name'].decode('latin1'), **args)
+            d = Division(id=row['id'], display_name=row['name'], **args)
             d.save()
             count += 1
         print(count, 'divisions')
