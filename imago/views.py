@@ -111,7 +111,7 @@ class JsonView(View):
                                       'query_string': request.META['QUERY_STRING'],
                                       'timestamp': datetime.datetime.utcnow()})
 
-        return HttpResponse(data, mimetype='application/json; charset=utf-8')
+        return HttpResponse(data, content_type='application/json; charset=utf-8')
 
     def get_page(self, data, page, per_page):
         """ return a single page - Mongo specific """
