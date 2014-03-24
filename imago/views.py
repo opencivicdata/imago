@@ -182,7 +182,7 @@ class JsonView(View):
 
             for key, value in obj.items():
                 if key.startswith('_'):
-                    del obj[key]
+                    pass #del obj[key]
                 else:
                     obj[key] = self._clean(value)
         elif isinstance(obj, list):
