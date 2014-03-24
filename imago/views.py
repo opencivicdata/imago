@@ -180,9 +180,9 @@ class JsonView(View):
             if '_id' in obj:
                 obj['id'] = obj['_id']
 
-            for key, value in obj.items():
+            for key, value in obj.copy().items():
                 if key.startswith('_'):
-                    pass #del obj[key]
+                    del obj[key]
                 else:
                     obj[key] = self._clean(value)
         elif isinstance(obj, list):
