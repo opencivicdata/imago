@@ -142,7 +142,7 @@ class JsonView(View):
 
         try:
             page = _clamp(int(get_params.get('page', 0)),
-                          0, total / per_page)
+                          0, int(total / per_page))
         except ValueError:
             page = 0
 

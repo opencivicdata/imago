@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 def dict_to_mongo_query(params, allowed_fields):
     query = {}
 
-    for key, value in params.iteritems():
+    for key, value in params.items():
         if '__' in key:
             key, operator = key.split('__', 1)
         else:
@@ -112,7 +112,7 @@ def bill_search(query, allowed_fields, bill_fields, sort):
             raise PermissionDenied('html detected')
 
         # pull out the fields
-        for key, value in query.iteritems():
+        for key, value in query.items():
             if '__' in key:
                 key, operator = key.split('__', 1)
             else:
