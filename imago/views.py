@@ -151,7 +151,7 @@ class JsonView(View):
                                           'per_page': per_page,
                                           'count': len(data),
                                           'total_count': total,
-                                          'max_page': total/per_page,
+                                          'max_page': int(total / per_page),
                                          }
                }
 
