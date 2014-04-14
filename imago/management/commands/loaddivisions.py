@@ -62,7 +62,7 @@ def load_divisions(clear=False):
         print(count, 'divisions')
 
 
-def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None):
+def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=False):
     if ignore:
         ignore = re.compile(ignore)
     ignored = 0
@@ -90,7 +90,8 @@ def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None):
             DivisionGeometry.objects.create(division_id=ocd_id, temporal_set=tset,
                                             boundary=boundary)
         elif not ignore or not ignore.match(boundary.name):
-            print('unmatched external id', boundary, boundary.external_id)
+            if not quiet:
+                print('unmatched external id', boundary, boundary.external_id)
         else:
             ignored += 1
 
@@ -104,10 +105,12 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--clear', action='store_true', dest='clear',
                     default=False, help='Clear divisions first.'),
+        make_option('--clear', action='store_true', dest='quiet',
+                    default=False, help='Be somewhat quiet.'),
     )
 
     def handle(self, *args, **options):
         checkout_repo()
         load_divisions(options['clear'])
         for set_id, d in settings.IMAGO_BOUNDARY_MAPPINGS.items():
-            load_mapping(set_id, **d)
+            load_mapping(set_id, quiet=options['quiet'], **d)
