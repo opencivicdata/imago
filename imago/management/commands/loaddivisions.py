@@ -105,7 +105,7 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--clear', action='store_true', dest='clear',
                     default=False, help='Clear divisions first.'),
-        make_option('--clear', action='store_true', dest='quiet',
+        make_option('--quiet', action='store_true', dest='quiet',
                     default=False, help='Be somewhat quiet.'),
     )
 
