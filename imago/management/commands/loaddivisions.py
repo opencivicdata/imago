@@ -53,7 +53,7 @@ def load_divisions(clear=False):
         filename = os.path.join(LOCAL_REPO, 'identifiers',
                                 'country-{}.csv'.format(settings.IMAGO_COUNTRY))
         print('loading ' + filename)
-        for row in csv.DictReader(open(filename)):
+        for row in csv.DictReader(open(filename, encoding='utf8')):
             args = _ocd_id_to_args(row['id'])
             args['redirect_id'] = row.get('sameAs', '')
             d = Division(id=row['id'], display_name=row['name'], **args)
@@ -69,7 +69,7 @@ def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=Fa
     geoid_mapping = {}
     filename = os.path.join(LOCAL_REPO, 'identifiers',
                             'country-{}.csv'.format(settings.IMAGO_COUNTRY))
-    for row in csv.DictReader(open(filename)):
+    for row in csv.DictReader(open(filename, encoding='utf8')):
         if row[key]:
             geoid_mapping[row[key]] = row['id']
 
