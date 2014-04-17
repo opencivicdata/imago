@@ -330,6 +330,30 @@ class PeopleList(JsonView):
 
         return query
 
+    def get_data(self, get_params, *args, **kwargs):
+        """
+        This is a shim put in place so that we can insert membership
+        objects if we request them. This is Mongo-specific.
+        """
+        data = super(PeopleList, self).get_data(get_params, *args, **kwargs)
+        flags = get_params.get("fields", [])
+        if flags and "memberships" in flags:
+            # OK. If we need to provide memberships, we can do them all
+            # upfront rather then dent the server for each call. This is
+            # super sub-optimal relational
+            #
+            # This has to be a special case due to a database normalization
+            # that we made to split memberships out.
+
+            results = data['results']
+            for result in results:
+                result['memberships'] = None
+                result['memberships'] = list(db.memberships.find({
+                    'person_id': result['_id']
+                }))
+
+        return data
+
 
 class BillList(JsonView):
     collection = db.bills
