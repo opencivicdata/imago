@@ -1,7 +1,6 @@
 import re
 import json
 import datetime
-import pymongo
 from django.http import HttpResponse
 from django.conf import settings
 from django.views.generic.base import View
@@ -14,19 +13,9 @@ from .exceptions import APIError
 from .utils import dict_to_mongo_query, bill_search
 from .models import Division
 
-if getattr(settings, 'USE_LOCKSMITH', False):
-    from locksmith.mongoauth.db import db as locksmith_db
-else:
-    locksmith_db = None
-
 
 def _clamp(val, _min, _max):
     return _min if val < _min else _max if val > _max else val
-
-
-def mongo_bulk_get(collection, ids):
-    results = collection.find({'_id': {'$in': ids}})
-    return {r['_id']: r for r in results}
 
 
 def time_param(param):

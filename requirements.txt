@@ -3,4 +3,4 @@ psycopg2
 pyelasticsearch
 django-appconf
 south
--e git://github.com/rhymeswithcycle/represent-boundaries.git#egg=boundaries
+-e git://github.com/jamesturk/represent-boundaries.git#egg=boundaries

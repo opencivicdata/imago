@@ -1,4 +1,3 @@
-from __future__ import print_function
 import re
 import os
 import csv
@@ -8,7 +7,7 @@ from optparse import make_option
 from django.db import transaction
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-from ...models import Division, DivisionGeometry, TemporalSet
+from ...models import DivisionGeometry, TemporalSet
 
 
 
@@ -50,7 +49,7 @@ def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=Fa
 
 
 class Command(BaseCommand):
-    help = 'Loads in division ids'
+    help = 'load in division-boundary mappings'
 
     option_list = BaseCommand.option_list + (
         make_option('--quiet', action='store_true', dest='quiet',

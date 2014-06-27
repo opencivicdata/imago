@@ -1,7 +1,7 @@
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from boundaries.models import BoundarySet, Boundary
-from pupa.models import Division
+from opencivicdata.models import Division
 
 
 class TemporalSet(models.Model):
