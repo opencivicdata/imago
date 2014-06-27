@@ -1,4 +1,3 @@
-import pymongo
 from .core import elasticsearch
 from .exceptions import APIError
 from django.core.exceptions import PermissionDenied
