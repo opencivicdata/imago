@@ -12,7 +12,8 @@ from .exceptions import APIError
 from .utils import dict_to_mongo_query, bill_search
 from .models import Division
 
-from opencivicdata.models import Jurisdiction
+from opencivicdata.models import (Jurisdiction, Organization, Person,
+                                  Bill, VoteEvent, Event)
 
 locksmith_db = None
 
@@ -181,3 +182,39 @@ class JurisdictionDetail(DetailView):
 
 class JurisdictionList(JsonView):
     model = Jurisdiction
+
+
+class OrganizationDetail(DetailView):
+    model = Organization
+
+
+class PersonDetail(DetailView):
+    model = Person
+
+
+class BillDetail(DetailView):
+    model = Bill
+
+
+class EventDetail(DetailView):
+    model = Event
+
+
+class VoteDetail(DetailView):
+    model = VoteEvent
+
+
+class OrganizationList(JsonView):
+    model = Organization
+
+
+class PeopleList(JsonView):
+    model = Person
+
+
+class BillList(JsonView):
+    model = Bill
+
+
+class VoteList(JsonView):
+    model = VoteEvent
