@@ -173,7 +173,11 @@ class JsonView(View):
 
 class DetailView(JsonView):
     def get_data(self, get_params, id):
-        pass
+        try:
+            obj = self.model.objects.get(id=id)
+        except self.model.DoesNotExist:
+            raise APIError('no such object: ' + id, 404)
+        return obj.to_dict()
 
 
 class JurisdictionDetail(DetailView):
