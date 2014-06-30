@@ -208,6 +208,10 @@ class OrganizationList(JsonView):
     model = Organization
 
 
+class EventList(JsonView):
+    model = Event
+
+
 class PeopleList(JsonView):
     model = Person
 
