@@ -20,9 +20,9 @@ urlpatterns = patterns(
     url(r'^organizations/$', OrganizationList.as_view()),
 
     # detail views
-    url(r'^(?P<id>ocd-jurisdiction/.+)/$', JurisdictionDetail.as_view()),
-    url(r'^(?P<id>ocd-person/.+)/$', PersonDetail.as_view()),
-    url(r'^(?P<id>ocd-event/.+)/$', EventDetail.as_view()),
-    url(r'^(?P<id>ocd-vote/.+)/$', VoteDetail.as_view()),
-    url(r'^(?P<id>ocd-organization/.+)/$', OrganizationDetail.as_view()),
+    url(r'^(?P<pk>ocd-jurisdiction/.+)/$', JurisdictionDetail.as_view()),
+    url(r'^(?P<pk>ocd-person/.+)/$', PersonDetail.as_view()),
+    url(r'^(?P<pk>ocd-event/.+)/$', EventDetail.as_view()),
+    url(r'^(?P<pk>ocd-vote/.+)/$', VoteDetail.as_view()),
+    url(r'^(?P<pk>ocd-organization/.+)/$', OrganizationDetail.as_view()),
 )
