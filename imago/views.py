@@ -11,6 +11,7 @@ from restless.http import HttpError
 class PublicListEndpoint(ListEndpoint):
     methods = ['GET']
     per_page = 100
+    serialize_config = {}
 
     def filter(self, data, **kwargs):
         return data
@@ -50,7 +51,7 @@ class PublicListEndpoint(ListEndpoint):
                 "cur_page": page,
                 "per_page": self.per_page,
             },
-            "results": [serialize(x, **self.serialize) for x in data_page.object_list]
+            "results": [serialize(x, **self.serialize_config) for x in data_page.object_list]
         }
 
 
@@ -69,42 +70,47 @@ class JurisdictionDetail(PublicDetailEndpoint):
 
 class OrganizationList(PublicListEndpoint):
     model = Organization
-    serialize = {
-        "include": [('posts', {})]
-    }
+    serialize_config = {"include": [('posts', {})]}
 
 
 class OrganizationDetail(PublicDetailEndpoint):
-    model = Jurisdiction
+    model = Organization
 
 
 class PeopleList(PublicListEndpoint):
-    model = Jurisdiction
+    model = Person
+    serialize_config = {"include": [
+        ('memberships', {
+            "include": [
+                ('post', {})
+            ]
+        }),
+    ]}
 
 
 class PersonDetail(PublicDetailEndpoint):
-    model = Jurisdiction
+    model = Person
 
 
 class BillList(PublicListEndpoint):
-    model = Jurisdiction
+    model = Bill
 
 
 class BillDetail(PublicDetailEndpoint):
-    model = Jurisdiction
+    model = Bill
 
 
 class VoteList(PublicListEndpoint):
-    model = Jurisdiction
+    model = VoteEvent
 
 
 class VoteDetail(PublicDetailEndpoint):
-    model = Jurisdiction
+    model = VoteEvent
 
 
 class EventList(PublicListEndpoint):
-    model = Jurisdiction
+    model = Event
 
 
 class EventDetail(PublicDetailEndpoint):
-    model = Jurisdiction
+    model = Event
