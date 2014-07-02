@@ -7,19 +7,6 @@ from restless.models import serialize
 from restless.http import HttpError
 
 
-def imagoserialize(obj, *args, rawfields=None, **kwargs):
-
-    if 'include' not in kwargs:
-        kwargs['include'] = []
-
-    raw = rawfields if rawfields is not None else []
-
-    for key in raw:
-        kwargs['include'].append((key, lambda x: getattr(x, key)))
-
-    return serialize(obj, *args, **kwargs)
-
-
 POST_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
@@ -35,11 +22,19 @@ MEMBERSHIP_SERIALIZE = {
 }
 
 
+BILL_SERIALIZE = {
+    "include": [
+        ('extras', lambda x: x.extras),
+        ('subject', lambda x: x.subject),
+        ('classification', lambda x: x.classification),
+    ]
+}
+
+
 class PublicListEndpoint(ListEndpoint):
     methods = ['GET']
     per_page = 100
     serialize_config = {}
-    serialize_raw = ['extras']
 
     def filter(self, data, **kwargs):
         return data
@@ -80,7 +75,7 @@ class PublicListEndpoint(ListEndpoint):
                 "per_page": self.per_page,
             },
             "results": [
-                imagoserialize(x, rawfields=self.serialize_raw, **self.serialize_config)
+                serialize(x, **self.serialize_config)
                 for x in data_page.object_list
             ]
         }
@@ -121,7 +116,7 @@ class PersonDetail(PublicDetailEndpoint):
 
 class BillList(PublicListEndpoint):
     model = Bill
-    serialize_raw = ['extras', 'classification', 'subject',]
+    serialize_config = BILL_SERIALIZE
 
 
 class BillDetail(PublicDetailEndpoint):
