@@ -7,6 +7,16 @@ from restless.models import serialize
 from restless.http import HttpError
 
 
+def smerge(dict1, dict2):
+    ret = dict(dict1)
+    for k, v in dict2.items():
+        if k not in ret:
+            ret[k] = []
+        ret[k] += v
+    return ret
+
+
+
 POST_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
@@ -30,8 +40,9 @@ MEMBERSHIP_SERIALIZE = {
 
 PERSON_SERIALIZE = {"include": [
     ('extras', lambda x: x.extras),
-    ('memberships', MEMBERSHIP_SERIALIZE),
-    # hide memberships.person_id
+    ('memberships', smerge(MEMBERSHIP_SERIALIZE, {
+        "exclude": ["person"],
+    })),
 ]}
 
 
@@ -43,6 +54,7 @@ BILL_SERIALIZE = {
         ('legislative_session', lambda x: x.legislative_session.name),
     ]
 }
+
 
 JURISDICTION_SERIALIZE = {
     "include": [
