@@ -39,10 +39,10 @@ class PublicListEndpoint(ListEndpoint):
     serialize_config = {}
 
     def filter(self, data, **kwargs):
-        return data
+        return data.filter(**kwargs)
 
-    def sort(self, data, **kwargs):
-        return data
+    def sort(self, data, sort_by):
+        return data.order_by(*sort_by)
 
     def paginate(self, data, page):
         paginator = Paginator(data, per_page=self.per_page)
@@ -60,7 +60,7 @@ class PublicListEndpoint(ListEndpoint):
 
         data = self.get_query_set(request, *args, **kwargs)
         data = self.filter(data, **params)
-        data = self.sort(data)
+        data = self.sort(data, sort_by)
         try:
             data_page = self.paginate(data, page)
         except EmptyPage:
@@ -109,6 +109,7 @@ class OrganizationDetail(PublicDetailEndpoint):
 class PeopleList(PublicListEndpoint):
     model = Person
     serialize_config = {"include": [
+        ('extras', lambda x: x.extras),
         ('memberships', MEMBERSHIP_SERIALIZE),
         # hide memberships.person_id
     ]}
