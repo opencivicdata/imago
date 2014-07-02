@@ -20,6 +20,9 @@ def smerge(dict1, dict2):
 POST_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
+        ('organization', {
+            "fields": ["id", "name"]
+        }),
     ]
 }
 
