@@ -18,7 +18,8 @@ MEMBERSHIP_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
         ('post', POST_SERIALIZE),
-    ]
+    ],
+    "exclude": ['id']
 }
 
 
@@ -27,6 +28,7 @@ BILL_SERIALIZE = {
         ('extras', lambda x: x.extras),
         ('subject', lambda x: x.subject),
         ('classification', lambda x: x.classification),
+        ('legislative_session', lambda x: x.legislative_session.name),
     ]
 }
 
@@ -69,10 +71,11 @@ class PublicListEndpoint(ListEndpoint):
 
         return {
             "meta": {
-                "count": data.count(),
-                "pages": data_page.end_index(),
-                "cur_page": page,
+                "count": len(data_page.object_list),
+                "page": page,
                 "per_page": self.per_page,
+                "max_page": data_page.end_index(),
+                "total_count": data.count(),
             },
             "results": [
                 serialize(x, **self.serialize_config)
@@ -107,6 +110,7 @@ class PeopleList(PublicListEndpoint):
     model = Person
     serialize_config = {"include": [
         ('memberships', MEMBERSHIP_SERIALIZE),
+        # hide memberships.person_id
     ]}
 
 
