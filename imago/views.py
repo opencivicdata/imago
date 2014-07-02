@@ -31,6 +31,9 @@ ORGANIZATION_SERIALIZE = {
 
 MEMBERSHIP_SERIALIZE = {
     "include": [
+        ('organization', {
+            "fields": ["id", "name"]
+        }),
         ('extras', lambda x: x.extras),
         ('post', POST_SERIALIZE),
     ],
@@ -113,7 +116,6 @@ class PublicListEndpoint(ListEndpoint):
                 for x in data_page.object_list
             ]
         }
-
 
 
 class PublicDetailEndpoint(DetailEndpoint):
