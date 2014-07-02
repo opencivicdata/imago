@@ -20,11 +20,26 @@ def imagoserialize(obj, *args, rawfields=None, **kwargs):
     return serialize(obj, *args, **kwargs)
 
 
+POST_SERIALIZE = {
+    "include": [
+        ('extras', lambda x: x.extras),
+    ]
+}
+
+
+MEMBERSHIP_SERIALIZE = {
+    "include": [
+        ('extras', lambda x: x.extras),
+        ('post', POST_SERIALIZE),
+    ]
+}
+
+
 class PublicListEndpoint(ListEndpoint):
     methods = ['GET']
     per_page = 100
     serialize_config = {}
-    serialize_raw = []
+    serialize_raw = ['extras']
 
     def filter(self, data, **kwargs):
         return data
@@ -86,7 +101,7 @@ class JurisdictionDetail(PublicDetailEndpoint):
 
 class OrganizationList(PublicListEndpoint):
     model = Organization
-    serialize_config = {"include": [('posts', {})]}
+    serialize_config = {"include": [('posts', POST_SERIALIZE)]}
 
 
 class OrganizationDetail(PublicDetailEndpoint):
@@ -96,11 +111,7 @@ class OrganizationDetail(PublicDetailEndpoint):
 class PeopleList(PublicListEndpoint):
     model = Person
     serialize_config = {"include": [
-        ('memberships', {
-            "include": [
-                ('post', {})
-            ]
-        }),
+        ('memberships', MEMBERSHIP_SERIALIZE),
     ]}
 
 
