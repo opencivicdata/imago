@@ -14,6 +14,11 @@ POST_SERIALIZE = {
 }
 
 
+ORGANIZATION_SERIALIZE = {
+    "include": [('posts', POST_SERIALIZE)]
+}
+
+
 MEMBERSHIP_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
@@ -23,12 +28,26 @@ MEMBERSHIP_SERIALIZE = {
 }
 
 
+PERSON_SERIALIZE = {"include": [
+    ('extras', lambda x: x.extras),
+    ('memberships', MEMBERSHIP_SERIALIZE),
+    # hide memberships.person_id
+]}
+
+
 BILL_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
         ('subject', lambda x: x.subject),
         ('classification', lambda x: x.classification),
         ('legislative_session', lambda x: x.legislative_session.name),
+    ]
+}
+
+JURISDICTION_SERIALIZE = {
+    "include": [
+        ('extras', lambda x: x.extras),
+        ('feature_flags', lambda x: x.feature_flags),
     ]
 }
 
@@ -91,32 +110,32 @@ class PublicDetailEndpoint(DetailEndpoint):
 
 class JurisdictionList(PublicListEndpoint):
     model = Jurisdiction
+    serialize_config = JURISDICTION_SERIALIZE
 
 
 class JurisdictionDetail(PublicDetailEndpoint):
     model = Jurisdiction
+    serialize_config = JURISDICTION_SERIALIZE
 
 
 class OrganizationList(PublicListEndpoint):
     model = Organization
-    serialize_config = {"include": [('posts', POST_SERIALIZE)]}
+    serialize_config = ORGANIZATION_SERIALIZE
 
 
 class OrganizationDetail(PublicDetailEndpoint):
     model = Organization
+    serialize_config = ORGANIZATION_SERIALIZE
 
 
 class PeopleList(PublicListEndpoint):
     model = Person
-    serialize_config = {"include": [
-        ('extras', lambda x: x.extras),
-        ('memberships', MEMBERSHIP_SERIALIZE),
-        # hide memberships.person_id
-    ]}
+    serialize_config = PERSON_SERIALIZE
 
 
 class PersonDetail(PublicDetailEndpoint):
     model = Person
+    serialize_config = PERSON_SERIALIZE
 
 
 class BillList(PublicListEndpoint):
@@ -126,6 +145,7 @@ class BillList(PublicListEndpoint):
 
 class BillDetail(PublicDetailEndpoint):
     model = Bill
+    serialize_config = BILL_SERIALIZE
 
 
 class VoteList(PublicListEndpoint):
