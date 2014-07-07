@@ -21,21 +21,28 @@ POST_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
         ('organization', {
-            "fields": ["id", "name"]
+            "fields": ["id", "name", "classification"]
         }),
     ]
 }
 
 
 ORGANIZATION_SERIALIZE = {
-    "include": [('posts', POST_SERIALIZE)]
+    "include": [
+        ('posts', POST_SERIALIZE),
+        ('jurisdiction', {
+            "fields": [
+                "id", "name", "division_id"
+            ]
+        }),
+    ]
 }
 
 
 MEMBERSHIP_SERIALIZE = {
     "include": [
         ('organization', {
-            "fields": ["id", "name"]
+            "fields": ["id", "name", "classification"]
         }),
         ('extras', lambda x: x.extras),
         ('post', POST_SERIALIZE),
