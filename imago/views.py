@@ -12,7 +12,8 @@ def smerge(dict1, dict2):
     for k, v in dict2.items():
         if k not in ret:
             ret[k] = []
-        ret[k] += v
+        rk = list(ret[k])
+        rk += v
     return ret
 
 
@@ -20,9 +21,9 @@ def smerge(dict1, dict2):
 POST_SERIALIZE = {
     "include": [
         ('extras', lambda x: x.extras),
-        ('organization', {
-            "fields": ["id", "name", "classification"]
-        }),
+    ],
+    "exclude": [
+        'organization',
     ]
 }
 
@@ -45,7 +46,17 @@ MEMBERSHIP_SERIALIZE = {
             "fields": ["id", "name", "classification"]
         }),
         ('extras', lambda x: x.extras),
-        ('post', POST_SERIALIZE),
+        ('post', smerge(
+            POST_SERIALIZE,
+            {"include": [
+                ('organization', {
+                    "fields": [
+                        "id",
+                        "id", "name", "classification"
+                    ]
+                })
+            ]}
+        )),
     ],
     "exclude": ['id']
 }
