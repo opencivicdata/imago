@@ -14,6 +14,7 @@ def smerge(dict1, dict2):
             ret[k] = []
         rk = list(ret[k])
         rk += v
+        ret[k] = rk
     return ret
 
 
