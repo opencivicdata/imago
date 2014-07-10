@@ -94,7 +94,11 @@ class PublicListEndpoint(ListEndpoint):
     per_page = 100
     serialize_config = {}
 
+    def adjust_filters(self, params):
+        return params
+
     def filter(self, data, **kwargs):
+        kwargs = self.adjust_filters(kwargs)
         return data.filter(**kwargs)
 
     def sort(self, data, sort_by):
@@ -147,6 +151,11 @@ class PublicDetailEndpoint(DetailEndpoint):
 class JurisdictionList(PublicListEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
+
+    def adjust_filters(self, params):
+        if 'name' in params:
+            params['name__contains'] = params.pop('name')
+        return params
 
 
 class JurisdictionDetail(PublicDetailEndpoint):
