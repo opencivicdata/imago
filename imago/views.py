@@ -118,6 +118,9 @@ class PublicListEndpoint(ListEndpoint):
         if 'sort_by' in params:
             sort_by = params.pop('sort_by').split(",")
 
+        if '_' in params:
+            params.pop("_")
+
         callback = None
         if 'callback' in params:
             callback = params.pop('callback')
@@ -169,7 +172,7 @@ class JurisdictionList(PublicListEndpoint):
 
     def adjust_filters(self, params):
         if 'name' in params:
-            params['name__contains'] = params.pop('name')
+            params['name__icontains'] = params.pop('name')
         return params
 
 
