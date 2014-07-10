@@ -4,7 +4,7 @@ from opencivicdata.models import (Jurisdiction, Organization, Person,
 from restless.modelviews import ListEndpoint, DetailEndpoint, Endpoint
 from django.core.paginator import Paginator, EmptyPage
 from restless.models import serialize
-from restless.http import HttpError
+from restless.http import HttpError, Http200
 
 
 def smerge(dict1, dict2):
@@ -118,6 +118,10 @@ class PublicListEndpoint(ListEndpoint):
         if 'sort_by' in params:
             sort_by = params.pop('sort_by').split(",")
 
+        callback = None
+        if 'callback' in params:
+            callback = params.pop('callback')
+
         data = self.get_query_set(request, *args, **kwargs)
         data = self.filter(data, **params)
         data = self.sort(data, sort_by)
@@ -129,7 +133,7 @@ class PublicListEndpoint(ListEndpoint):
                 'No such page (heh, literally - its out of bounds)'
             )
 
-        return {
+        response = Http200({
             "meta": {
                 "count": len(data_page.object_list),
                 "page": page,
@@ -141,7 +145,18 @@ class PublicListEndpoint(ListEndpoint):
                 serialize(x, **self.serialize_config)
                 for x in data_page.object_list
             ]
-        }
+        })
+
+        if callback:
+            # If we have a callback, let's wrap the content in a jsonp
+            # callback.
+            response.content = (
+                callback.encode() + b"("
+                    + response.content
+                + b");"
+            )
+
+        return response
 
 
 class PublicDetailEndpoint(DetailEndpoint):
