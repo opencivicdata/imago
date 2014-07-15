@@ -11,6 +11,11 @@ JURISDICTION_SERIALIZE = defaultdict(dict, [
     ("division", DIVISION_SERIALIZE),
 ])
 
+LEGISLATIVE_SESSION_SERIALIZE = defaultdict(dict, [
+    ('jurisdiction', JURISDICTION_SERIALIZE),
+])
+
+
 ORGANIZATION_SERIALIZE = defaultdict(dict, [
     ("jurisdiction", JURISDICTION_SERIALIZE),
 ])
@@ -42,8 +47,32 @@ ORGANIZATION_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
 PERSON_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
 POST_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
 
+LINK_BASE = defaultdict(dict, [
+    ('links', {
+        'media_type': {},
+        'url': {},
+    }),
+])
 
 BILL_SERIALIZE = defaultdict(dict, [
+    ('legislative_session', LEGISLATIVE_SESSION_SERIALIZE),
+    ('from_organization', ORGANIZATION_SERIALIZE),
+    ('classification', lambda x: x.classification),
+    ('subject', lambda x: x.classification),
+    ('actions', {
+        'organization': ORGANIZATION_SERIALIZE,
+        'classification': lambda x: x.classification,
+    }),
+    ('documents', {
+        "note": {}, "date": {}, "links": LINK_BASE,
+    }),
+    ('versions', {
+        "note": {}, "date": {}, "links": LINK_BASE,
+    }),
+    ('abstracts', defaultdict(dict)),
+    ('other_titles', defaultdict(dict)),
+    ('other_identifiers', defaultdict(dict)),
+    ('sponsorships', {"primary": {}, "classification": {}}),
 ])
 
 VOTE_SERIALIZE = defaultdict(dict, [
@@ -154,14 +183,43 @@ class PersonDetail(PublicDetailEndpoint):
 
 class BillList(PublicListEndpoint):
     model = Bill
-    serialize_config = {}
-    default_fields = []
+    serialize_config = BILL_SERIALIZE
+    default_fields = [
+        'id', 'identifier', 'title', 'classification',
+
+        'from_organization.name',
+        'from_organization.id',
+
+        'from_organization.jurisdiction.id',
+        'from_organization.jurisdiction.name',
+    ]
 
 
 class BillDetail(PublicDetailEndpoint):
     model = Bill
-    serialize_config = {}
-    default_fields = []
+    serialize_config = BILL_SERIALIZE
+    default_fields = [
+        'id', 'identifier', 'title', 'classification', 'abstracts',
+
+        'other_titles.title',
+        'other_titles.note',
+
+        'from_organization.name',
+        'from_organization.id',
+
+        'from_organization.jurisdiction.id',
+        'from_organization.jurisdiction.name',
+
+        'documents.note',
+        'documents.date',
+        'documents.links.url',
+        'documents.links.media_type',
+
+        'versions.note',
+        'versions.date',
+        'versions.links.url',
+        'versions.links.media_type',
+    ]
 
 
 class VoteList(PublicListEndpoint):
