@@ -78,7 +78,14 @@ BILL_SERIALIZE = defaultdict(dict, [
 VOTE_SERIALIZE = defaultdict(dict, [
 ])
 
+EVENT_AGENDA_ITEM = defaultdict(dict, [
+    ('subjects', lambda x: x.subjects),
+    ('related_entities', defaultdict(dict)),
+])
+
 EVENT_SERIALIZE = defaultdict(dict, [
+    ('jurisdiction', JURISDICTION_SERIALIZE),
+    ('agenda', EVENT_AGENDA_ITEM),
 ])
 
 
@@ -224,19 +231,30 @@ class BillDetail(PublicDetailEndpoint):
 
 class VoteList(PublicListEndpoint):
     model = VoteEvent
+    serialize_config = VOTE_SERIALIZE
     default_fields = []
 
 
 class VoteDetail(PublicDetailEndpoint):
     model = VoteEvent
+    serialize_config = VOTE_SERIALIZE
     default_fields = []
 
 
 class EventList(PublicListEndpoint):
     model = Event
-    default_fields = []
+    serialize_config = EVENT_SERIALIZE
+    default_fields = [
+        'id', 'name', 'description', 'classification', 'start_time',
+        'timezone', 'end_time', 'all_day', 'status',
+
+        'agenda.description', 'agenda.order', 'agenda.subjects',
+        'agenda.related_entities.note',
+        'agenda.related_entities.entity_name',
+    ]
 
 
 class EventDetail(PublicDetailEndpoint):
     model = Event
+    serialize_config = EVENT_SERIALIZE
     default_fields = []
