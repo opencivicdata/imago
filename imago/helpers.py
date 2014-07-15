@@ -14,7 +14,7 @@ def get_fields(root, fields):
             continue
         prefix, postfix = field.split(".", 1)
         subfields[prefix].append(postfix)
-    ret = {x: root[x] for x in concrete}
+    ret = {x: {"fields": list(root[x].items())} for x in concrete}
     for key, fields in subfields.items():
         ret[key] = get_fields(root[key], fields)
     return {"fields": list(ret.items())}
@@ -103,6 +103,8 @@ class PublicListEndpoint(ListEndpoint):
     def get_serialize_config(cls, fields=None):
         if fields is None:
             fields = cls.default_fields
+        print(cls.serialize_config)
+        raise Exception
         return {"fields": [(x, cls.serialize_config[x]) for x in fields]}
 
 

@@ -86,6 +86,7 @@ EVENT_AGENDA_ITEM = defaultdict(dict, [
 EVENT_SERIALIZE = defaultdict(dict, [
     ('jurisdiction', JURISDICTION_SERIALIZE),
     ('agenda', EVENT_AGENDA_ITEM),
+    ('extras', lambda x: x.extras),
 ])
 
 
@@ -257,4 +258,4 @@ class EventList(PublicListEndpoint):
 class EventDetail(PublicDetailEndpoint):
     model = Event
     serialize_config = EVENT_SERIALIZE
-    default_fields = []
+    default_fields = ['jurisdiction']
