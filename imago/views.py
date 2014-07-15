@@ -77,9 +77,9 @@ class OrganizationList(PublicListEndpoint):
     default_fields = ['id', 'name', 'image', 'classification',
                       'jurisdiction.id',
                       'parent.id', 'parent.name',
+
                       'memberships.person.id', 'memberships.person.name',
-                      'memberships.post.id',
-                      'memberships.post.label', 'memberships.post.role',
+                      'memberships.post.id', 'memberships.post.label', 'memberships.post.role',
                      ]
 
 
