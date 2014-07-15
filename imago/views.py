@@ -75,18 +75,40 @@ class OrganizationList(PublicListEndpoint):
     model = Organization
     serialize_config = ORGANIZATION_SERIALIZE
     default_fields = ['id', 'name', 'image', 'classification',
-                      'jurisdiction.id',
-                      'parent.id', 'parent.name',
-
+                      'jurisdiction.id', 'parent.id', 'parent.name',
                       'memberships.person.id', 'memberships.person.name',
-                      'memberships.post.id', 'memberships.post.label', 'memberships.post.role',
-                     ]
+                      'memberships.post.id', 'memberships.post.label',
+                      'memberships.post.role',]
 
 
 class OrganizationDetail(PublicDetailEndpoint):
     model = Organization
-    serialize_config = OrganizationList.serialize_config
-    default_fields = OrganizationList.default_fields
+    serialize_config = ORGANIZATION_SERIALIZE
+    default_fields = [
+        'created_at', 'updated_at', 'extras', 'id', 'name', 'image',
+        'classification', 'founding_date', 'dissolution_date',
+
+        'parent.id',
+        'parent.name',
+
+        'jurisdiction.id',
+        'jurisdiction.name',
+        'jurisdiction.division.id',
+        'jurisdiction.division.display_name',
+
+        'posts.id',
+        'posts.label',
+        'posts.role',
+
+        'memberships.person.id',
+        'memberships.person.name',
+        'memberships.post.id',
+        'memberships.post.label',
+        'memberships.post.role',
+
+        'sources',
+    ]
+
 
 
 class PeopleList(PublicListEndpoint):

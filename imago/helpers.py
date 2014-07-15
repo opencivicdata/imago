@@ -108,3 +108,31 @@ class PublicListEndpoint(ListEndpoint):
 
 class PublicDetailEndpoint(DetailEndpoint):
     methods = ['GET']
+
+    # XXX: Callback decorator.
+    # XXX: Cachebuster callback
+    def get(self, request, pk, *args, **kwargs):
+        params = request.params
+
+        if '_' in params:
+            params.pop("_")
+
+        fields = self.default_fields
+        if 'fields' in params:
+            fields = params.pop('fields').split(",")
+
+        callback = None
+        if 'callback' in params:
+            callback = params.pop('callback')
+
+        obj = self.model.objects.get(pk=pk)
+        config = get_fields(self.serialize_config, fields=fields)
+        response = Http200(serialize(obj, **config))
+
+        if callback:
+            response.content = (
+                callback.encode() + b"("
+                    + response.content
+                + b");"
+            )
+        return response
