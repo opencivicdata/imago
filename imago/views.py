@@ -131,8 +131,25 @@ class PeopleList(PublicListEndpoint):
 
 class PersonDetail(PublicDetailEndpoint):
     model = Person
-    serialize_config = {}
-    default_fields = []
+    serialize_config = PERSON_SERIALIZE
+    default_fields = [
+        'id', 'name', 'sort_name', 'image', 'gender', 'summary',
+        'national_identity', 'biography', 'birth_date', 'death_date',
+
+        'memberships.organization.id',
+        'memberships.organization.name',
+        'memberships.organization.classification',
+
+        'memberships.organization.jurisdiction.id',
+        'memberships.organization.jurisdiction.name',
+
+        'memberships.organization.jurisdiction.division.id',
+        'memberships.organization.jurisdiction.division.display_name',
+
+        'memberships.post.id',
+        'memberships.post.label',
+        'memberships.post.role',
+    ]
 
 
 class BillList(PublicListEndpoint):
