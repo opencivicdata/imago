@@ -2,6 +2,22 @@ from django.core.paginator import Paginator, EmptyPage
 from restless.modelviews import ListEndpoint, DetailEndpoint
 from restless.models import serialize
 from restless.http import HttpError, Http200
+from collections import defaultdict
+
+
+def get_fields(root, fields):
+    subfields = defaultdict(list)
+    concrete = []
+    for field in fields:
+        if '.' not in field:
+            concrete.append(field)
+            continue
+        prefix, postfix = field.split(".", 1)
+        subfields[prefix].append(postfix)
+    ret = {x: root[x] for x in concrete}
+    for key, fields in subfields.items():
+        ret[key] = get_fields(root[key], fields)
+    return {"fields": list(ret.items())}
 
 
 class PublicListEndpoint(ListEndpoint):
@@ -56,6 +72,8 @@ class PublicListEndpoint(ListEndpoint):
                 'No such page (heh, literally - its out of bounds)'
             )
 
+        config = get_fields(self.serialize_config, fields=fields)
+
         response = Http200({
             "meta": {
                 "count": len(data_page.object_list),
@@ -65,7 +83,7 @@ class PublicListEndpoint(ListEndpoint):
                 "total_count": data.count(),
             },
             "results": [
-                serialize(x, **self.get_serialize_config(fields=fields))
+                serialize(x, **config)
                 for x in data_page.object_list
             ]
         })
@@ -85,13 +103,7 @@ class PublicListEndpoint(ListEndpoint):
     def get_serialize_config(cls, fields=None):
         if fields is None:
             fields = cls.default_fields
-
-        r = {
-            "fields": [
-                (x, cls.serialize_config[x]) for x in fields
-            ]
-        }
-        return r
+        return {"fields": [(x, cls.serialize_config[x]) for x in fields]}
 
 
 class PublicDetailEndpoint(DetailEndpoint):

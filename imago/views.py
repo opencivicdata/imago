@@ -1,26 +1,26 @@
 from opencivicdata.models import (Jurisdiction, Organization, Person,
                                   Bill, VoteEvent, Event)
-
 from .helpers import PublicListEndpoint, PublicDetailEndpoint
+from collections import defaultdict
 
 
-DIVISION_SERIALIZE = {
-    "id": {},
-    "display_name": {},
-}
+DIVISION_SERIALIZE = defaultdict(dict)
+JURISDICTION_SERIALIZE = defaultdict(dict, [
+    ("extras", lambda x: x.extras),
+    ("feature_flags", lambda x: x.feature_flags),
+    ("division", DIVISION_SERIALIZE),
+])
+ORGANIZATION_SERIALIZE = defaultdict(dict)
+PERSON_SERIALIZE = defaultdict(dict)
+BILL_SERIALIZE = defaultdict(dict)
+VOTE_SERIALIZE = defaultdict(dict)
+EVENT_SERIALIZE = defaultdict(dict)
 
 
 class JurisdictionList(PublicListEndpoint):
     model = Jurisdiction
-    serialize_config = {
-        "name": {},
-        "url": {},
-        "classification": {},
-        "division": {"fields": DIVISION_SERIALIZE},
-        'extras': lambda x: x.extras,
-        'feature_flags': lambda x: x.feature_flags,
-    }
-    default_fields = serialize_config.keys()
+    serialize_config = JURISDICTION_SERIALIZE
+    default_fields = ['name', 'extras']
 
     def adjust_filters(self, params):
         if 'name' in params:
@@ -31,21 +31,12 @@ class JurisdictionList(PublicListEndpoint):
 class JurisdictionDetail(PublicDetailEndpoint):
     model = Jurisdiction
     serialize_config = JurisdictionList.serialize_config
-    default_fields = JurisdictionList.default_fields
+    default_fields = []
 
 
 class OrganizationList(PublicListEndpoint):
     model = Organization
-    serialize_config = {
-        "jurisdiction": {"fields": ["name", "id"],},
-        "id": {},
-        "name": {},
-        "image": {},
-        "classification": {},
-        "dissolution_date": {},
-        "parent": {"fields": ["id", "name",]},
-        "founding_date": {},
-    }
+    serialize_config = {}
     default_fields = serialize_config.keys()
 
 
@@ -57,7 +48,8 @@ class OrganizationDetail(PublicDetailEndpoint):
 
 class PeopleList(PublicListEndpoint):
     model = Person
-    serialize_config = {}
+    serialize_config = {
+    }
     default_fields = []
 
 
