@@ -5,6 +5,7 @@ from collections import defaultdict
 
 
 DIVISION_SERIALIZE = defaultdict(dict)
+
 JURISDICTION_SERIALIZE = defaultdict(dict, [
     ("extras", lambda x: x.extras),
     ("feature_flags", lambda x: x.feature_flags),
@@ -20,6 +21,7 @@ ORGANIZATION_SERIALIZE = defaultdict(dict, [
     ("jurisdiction", JURISDICTION_SERIALIZE),
 ])
 ORGANIZATION_SERIALIZE['parent'] = ORGANIZATION_SERIALIZE
+ORGANIZATION_SERIALIZE['children'] = ORGANIZATION_SERIALIZE
 
 
 PERSON_SERIALIZE = defaultdict(dict, [
@@ -130,19 +132,19 @@ class OrganizationDetail(PublicDetailEndpoint):
     model = Organization
     serialize_config = ORGANIZATION_SERIALIZE
     default_fields = get_field_list(model, without=[
-        'eventrelatedentity',
+        'memberships_on_behalf_of',
         'billactionrelatedentity',
+        'eventrelatedentity',
         'eventparticipant',
         'billsponsorship',
-        'parent',  # Below.
         'memberships',  # Below.
-        'posts',
-        'actions',
-        'bills',
-        'memberships_on_behalf_of',
         'parent_id',  # Present as parent.id
-        'votes',
         'children',
+        'actions',
+        'parent',  # Below.
+        'posts',
+        'bills',
+        'votes',
     ]) + [
         'parent.id',
         'parent.name',
