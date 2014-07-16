@@ -22,6 +22,12 @@ ORGANIZATION_SERIALIZE = defaultdict(dict, [
 ])
 ORGANIZATION_SERIALIZE['parent'] = ORGANIZATION_SERIALIZE
 ORGANIZATION_SERIALIZE['children'] = ORGANIZATION_SERIALIZE
+ORGANIZATION_SERIALIZE['identifiers'] = {
+    # Don't leak 'id'
+    "identifier": {},
+    # Don't allow recuse into our own org.
+    "scheme": {},
+}
 
 
 PERSON_SERIALIZE = defaultdict(dict, [
