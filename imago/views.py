@@ -5,6 +5,7 @@ from collections import defaultdict
 
 
 DIVISION_SERIALIZE = defaultdict(dict)
+SOURCES_SERIALIZE = {"note": {}, "url": {},}
 
 JURISDICTION_SERIALIZE = defaultdict(dict, [
     ("extras", lambda x: x.extras),
@@ -19,6 +20,7 @@ LEGISLATIVE_SESSION_SERIALIZE = defaultdict(dict, [
 
 ORGANIZATION_SERIALIZE = defaultdict(dict, [
     ("jurisdiction", JURISDICTION_SERIALIZE),
+    ("sources", SOURCES_SERIALIZE),
 ])
 ORGANIZATION_SERIALIZE['parent'] = ORGANIZATION_SERIALIZE
 ORGANIZATION_SERIALIZE['children'] = ORGANIZATION_SERIALIZE
@@ -31,6 +33,7 @@ ORGANIZATION_SERIALIZE['identifiers'] = {
 
 
 PERSON_SERIALIZE = defaultdict(dict, [
+    ("sources", SOURCES_SERIALIZE),
 ])
 
 POST_SERIALIZE = defaultdict(dict, [
