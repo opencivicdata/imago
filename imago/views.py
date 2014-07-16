@@ -21,6 +21,7 @@ ORGANIZATION_SERIALIZE = defaultdict(dict, [
 ])
 ORGANIZATION_SERIALIZE['parent'] = ORGANIZATION_SERIALIZE
 
+
 PERSON_SERIALIZE = defaultdict(dict, [
 ])
 
@@ -105,8 +106,14 @@ class JurisdictionList(PublicListEndpoint):
 class JurisdictionDetail(PublicDetailEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
-    # default_fields = JurisdictionList.default_fields
-    default_fields = get_field_list(model)
+    default_fields = get_field_list(model, without=[
+        'event_locations',
+        'events',
+        'organizations',
+        'division',
+    ]) + [
+        'division.id', 'division.display_name'
+    ]
 
 
 class OrganizationList(PublicListEndpoint):
@@ -122,12 +129,32 @@ class OrganizationList(PublicListEndpoint):
 class OrganizationDetail(PublicDetailEndpoint):
     model = Organization
     serialize_config = ORGANIZATION_SERIALIZE
-    default_fields = [
-        'created_at', 'updated_at', 'extras', 'id', 'name', 'image',
-        'classification', 'founding_date', 'dissolution_date',
-
+    default_fields = get_field_list(model, without=[
+        'eventrelatedentity',
+        'billactionrelatedentity',
+        'eventparticipant',
+        'billsponsorship',
+        'parent',  # Below.
+        'memberships',  # Below.
+        'posts',
+        'actions',
+        'bills',
+        'memberships_on_behalf_of',
+        'parent_id',  # Present as parent.id
+        'votes',
+        'children',
+    ]) + [
         'parent.id',
         'parent.name',
+
+        'memberships.start_date',
+        'memberships.end_date',
+        'memberships.person.id',
+        'memberships.person.name',
+        'memberships.post.id',
+
+        'children.id',
+        'children.name',
 
         'jurisdiction.id',
         'jurisdiction.name',
@@ -137,14 +164,6 @@ class OrganizationDetail(PublicDetailEndpoint):
         'posts.id',
         'posts.label',
         'posts.role',
-
-        'memberships.person.id',
-        'memberships.person.name',
-        'memberships.post.id',
-        'memberships.post.label',
-        'memberships.post.role',
-
-        'sources',
     ]
 
 
@@ -170,24 +189,25 @@ class PeopleList(PublicListEndpoint):
 class PersonDetail(PublicDetailEndpoint):
     model = Person
     serialize_config = PERSON_SERIALIZE
-    default_fields = [
-        'id', 'name', 'sort_name', 'image', 'gender', 'summary',
-        'national_identity', 'biography', 'birth_date', 'death_date',
+    default_fields = get_field_list(model)
+    # default_fields = [
+    #     'id', 'name', 'sort_name', 'image', 'gender', 'summary',
+    #     'national_identity', 'biography', 'birth_date', 'death_date',
 
-        'memberships.organization.id',
-        'memberships.organization.name',
-        'memberships.organization.classification',
+    #     'memberships.organization.id',
+    #     'memberships.organization.name',
+    #     'memberships.organization.classification',
 
-        'memberships.organization.jurisdiction.id',
-        'memberships.organization.jurisdiction.name',
+    #     'memberships.organization.jurisdiction.id',
+    #     'memberships.organization.jurisdiction.name',
 
-        'memberships.organization.jurisdiction.division.id',
-        'memberships.organization.jurisdiction.division.display_name',
+    #     'memberships.organization.jurisdiction.division.id',
+    #     'memberships.organization.jurisdiction.division.display_name',
 
-        'memberships.post.id',
-        'memberships.post.label',
-        'memberships.post.role',
-    ]
+    #     'memberships.post.id',
+    #     'memberships.post.label',
+    #     'memberships.post.role',
+    # ]
 
 
 class BillList(PublicListEndpoint):

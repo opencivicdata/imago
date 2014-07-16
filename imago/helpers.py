@@ -5,8 +5,13 @@ from restless.http import HttpError, Http200
 from collections import defaultdict
 
 
-def get_field_list(model):
-    return model._meta.get_all_field_names()
+def get_field_list(model, without=None):
+    if without is None:
+        without = set()
+    else:
+        without = set(without)
+
+    return list(set(model._meta.get_all_field_names()) - without)
 
 
 def get_fields(root, fields):
@@ -27,8 +32,8 @@ def get_fields(root, fields):
 
     for key, fields in subfields.items():
         ret[key] = get_fields(root[key], fields)
-    return {"fields": list(ret.items())}
 
+    return {"fields": list(ret.items())}
 
 
 def cachebusterable(fn):
