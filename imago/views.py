@@ -258,4 +258,4 @@ class EventList(PublicListEndpoint):
 class EventDetail(PublicDetailEndpoint):
     model = Event
     serialize_config = EVENT_SERIALIZE
-    default_fields = ['jurisdiction']
+    default_fields = []
