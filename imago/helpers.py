@@ -14,15 +14,13 @@ def get_field_list(model, without=None):
 
 
 def get_fields(root, fields):
-
     def fwrap(obj):
         if isinstance(obj, dict):
             if obj == {} or obj.get("fields"):
                 return obj
             obj = [(x, fwrap(y)) for x, y in obj.items()]
-            ret = {"fields": obj}
-        return ret
-
+            return {"fields": obj}
+        return obj
     subfields = defaultdict(list)
     concrete = []
     for field in fields:
@@ -31,11 +29,9 @@ def get_fields(root, fields):
             continue
         prefix, postfix = field.split(".", 1)
         subfields[prefix].append(postfix)
-
     ret = {x: fwrap(root[x]) for x in concrete}
     for key, fields in subfields.items():
         ret[key] = get_fields(root[key], fields)
-
     return fwrap(ret)
 
 
