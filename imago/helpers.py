@@ -15,11 +15,11 @@ def get_field_list(model, without=None):
 
 def get_fields(root, fields):
 
-    def fwrap(obj, cache=None):
+    def fwrap(obj):
         if isinstance(obj, dict):
             if obj == {} or obj.get("fields"):
                 return obj
-            obj = [(x, fwrap(y, cache=cache)) for x, y in obj.items()]
+            obj = [(x, fwrap(y)) for x, y in obj.items()]
             ret = {"fields": obj}
         return ret
 
