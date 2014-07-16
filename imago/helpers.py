@@ -5,6 +5,10 @@ from restless.http import HttpError, Http200
 from collections import defaultdict
 
 
+def get_field_list(model):
+    return model._meta.get_all_field_names()
+
+
 def get_fields(root, fields):
     subfields = defaultdict(list)
     concrete = []
@@ -24,6 +28,35 @@ def get_fields(root, fields):
     for key, fields in subfields.items():
         ret[key] = get_fields(root[key], fields)
     return {"fields": list(ret.items())}
+
+
+
+def cachebusterable(fn):
+    def _(self, request, *args, **kwargs):
+        params = request.params
+        if '_' in params:
+            params.pop("_")
+        return fn(self, request, *args, **kwargs)
+    return _
+
+
+def callbackable(fn):
+    def _(self, request, *args, **kwargs):
+        params = request.params
+        callback = None
+        if 'callback' in params:
+            callback = params.pop('callback')
+        response = fn(self, request, *args, **kwargs)
+        if callback:
+            response.content = (
+                callback.encode() + b"("
+                    + response.content
+                + b");"
+            )
+        return response
+    return _
+
+
 
 
 class PublicListEndpoint(ListEndpoint):
@@ -46,6 +79,8 @@ class PublicListEndpoint(ListEndpoint):
         paginator = Paginator(data, per_page=self.per_page)
         return paginator.page(page)
 
+    @cachebusterable
+    @callbackable
     def get(self, request, *args, **kwargs):
         params = request.params
         page = 1
@@ -56,16 +91,9 @@ class PublicListEndpoint(ListEndpoint):
         if 'sort_by' in params:
             sort_by = params.pop('sort_by').split(",")
 
-        if '_' in params:
-            params.pop("_")
-
         fields = self.default_fields
         if 'fields' in params:
             fields = params.pop('fields').split(",")
-
-        callback = None
-        if 'callback' in params:
-            callback = params.pop('callback')
 
         data = self.get_query_set(request, *args, **kwargs)
         data = self.filter(data, **params)
@@ -94,15 +122,6 @@ class PublicListEndpoint(ListEndpoint):
             ]
         })
 
-        if callback:
-            # If we have a callback, let's wrap the content in a jsonp
-            # callback.
-            response.content = (
-                callback.encode() + b"("
-                    + response.content
-                + b");"
-            )
-
         return response
 
     @classmethod
@@ -115,30 +134,17 @@ class PublicListEndpoint(ListEndpoint):
 class PublicDetailEndpoint(DetailEndpoint):
     methods = ['GET']
 
-    # XXX: Callback decorator.
-    # XXX: Cachebuster callback
+    @cachebusterable
+    @callbackable
     def get(self, request, pk, *args, **kwargs):
         params = request.params
-
-        if '_' in params:
-            params.pop("_")
 
         fields = self.default_fields
         if 'fields' in params:
             fields = params.pop('fields').split(",")
 
-        callback = None
-        if 'callback' in params:
-            callback = params.pop('callback')
-
         obj = self.model.objects.get(pk=pk)
         config = get_fields(self.serialize_config, fields=fields)
         response = Http200(serialize(obj, **config))
 
-        if callback:
-            response.content = (
-                callback.encode() + b"("
-                    + response.content
-                + b");"
-            )
         return response

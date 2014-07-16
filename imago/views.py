@@ -1,6 +1,6 @@
 from opencivicdata.models import (Jurisdiction, Organization, Person,
                                   Bill, VoteEvent, Event)
-from .helpers import PublicListEndpoint, PublicDetailEndpoint
+from .helpers import PublicListEndpoint, PublicDetailEndpoint, get_field_list
 from collections import defaultdict
 
 
@@ -105,7 +105,8 @@ class JurisdictionList(PublicListEndpoint):
 class JurisdictionDetail(PublicDetailEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
-    default_fields = JurisdictionList.default_fields
+    # default_fields = JurisdictionList.default_fields
+    default_fields = get_field_list(model)
 
 
 class OrganizationList(PublicListEndpoint):
@@ -206,28 +207,29 @@ class BillList(PublicListEndpoint):
 class BillDetail(PublicDetailEndpoint):
     model = Bill
     serialize_config = BILL_SERIALIZE
-    default_fields = [
-        'id', 'identifier', 'title', 'classification', 'abstracts',
+    default_fields = get_field_list(model)
+    # default_fields = [
+    #     'id', 'identifier', 'title', 'classification', 'abstracts',
 
-        'other_titles.title',
-        'other_titles.note',
+    #     'other_titles.title',
+    #     'other_titles.note',
 
-        'from_organization.name',
-        'from_organization.id',
+    #     'from_organization.name',
+    #     'from_organization.id',
 
-        'from_organization.jurisdiction.id',
-        'from_organization.jurisdiction.name',
+    #     'from_organization.jurisdiction.id',
+    #     'from_organization.jurisdiction.name',
 
-        'documents.note',
-        'documents.date',
-        'documents.links.url',
-        'documents.links.media_type',
+    #     'documents.note',
+    #     'documents.date',
+    #     'documents.links.url',
+    #     'documents.links.media_type',
 
-        'versions.note',
-        'versions.date',
-        'versions.links.url',
-        'versions.links.media_type',
-    ]
+    #     'versions.note',
+    #     'versions.date',
+    #     'versions.links.url',
+    #     'versions.links.media_type',
+    # ]
 
 
 class VoteList(PublicListEndpoint):
@@ -239,7 +241,7 @@ class VoteList(PublicListEndpoint):
 class VoteDetail(PublicDetailEndpoint):
     model = VoteEvent
     serialize_config = VOTE_SERIALIZE
-    default_fields = []
+    default_fields = get_field_list(model)
 
 
 class EventList(PublicListEndpoint):
@@ -258,4 +260,4 @@ class EventList(PublicListEndpoint):
 class EventDetail(PublicDetailEndpoint):
     model = Event
     serialize_config = EVENT_SERIALIZE
-    default_fields = []
+    default_fields = get_field_list(model)
