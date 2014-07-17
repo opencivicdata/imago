@@ -45,6 +45,11 @@ def cachebusterable(fn):
 
 
 def callbackable(fn):
+    """
+    Deprecated as of Jul 17, 2014 (PRT)
+
+    Removed in favor of CORS.
+    """
     def _(self, request, *args, **kwargs):
         params = request.params
         callback = None
@@ -84,7 +89,6 @@ class PublicListEndpoint(ListEndpoint):
         return paginator.page(page)
 
     @cachebusterable
-    @callbackable
     def get(self, request, *args, **kwargs):
         params = request.params
         page = 1
@@ -125,6 +129,7 @@ class PublicListEndpoint(ListEndpoint):
             ]
         })
 
+        response['Access-Control-Allow-Origin'] = "*"
         return response
 
     @classmethod
@@ -138,7 +143,6 @@ class PublicDetailEndpoint(DetailEndpoint):
     methods = ['GET']
 
     @cachebusterable
-    @callbackable
     def get(self, request, pk, *args, **kwargs):
         params = request.params
 
@@ -149,5 +153,6 @@ class PublicDetailEndpoint(DetailEndpoint):
         obj = self.model.objects.get(pk=pk)
         config = get_fields(self.serialize_config, fields=fields)
         response = Http200(serialize(obj, **config))
+        response['Access-Control-Allow-Origin'] = "*"
 
         return response
