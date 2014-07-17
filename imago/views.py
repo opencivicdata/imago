@@ -2,6 +2,18 @@ from opencivicdata.models import (Jurisdiction, Organization, Person,
                                   Bill, VoteEvent, Event)
 from .helpers import PublicListEndpoint, PublicDetailEndpoint, get_field_list
 from collections import defaultdict
+import pytz
+
+
+def dout(obj):
+    """
+    Helper function to ensure that we're always printing internal
+    datetime objects in a fully qualified UTC timezone. This will
+    let 'None' values pass through untouched.
+    """
+    if obj is None:
+        return
+    return pytz.UTC.localize(obj).isoformat()
 
 
 DIVISION_SERIALIZE = defaultdict(dict)
@@ -30,7 +42,6 @@ ORGANIZATION_SERIALIZE['identifiers'] = {
     # Don't allow recuse into our own org.
     "scheme": {},
 }
-
 
 PERSON_SERIALIZE = defaultdict(dict, [
     ("sources", SOURCES_SERIALIZE),
@@ -96,6 +107,8 @@ EVENT_AGENDA_ITEM = defaultdict(dict, [
 ])
 
 EVENT_SERIALIZE = defaultdict(dict, [
+    ('start_time', lambda x: dout(x.start_time)),
+    ('end_time', lambda x: dout(x.end_time)),
     ('jurisdiction', JURISDICTION_SERIALIZE),
     ('agenda', EVENT_AGENDA_ITEM),
     ('extras', lambda x: x.extras),
