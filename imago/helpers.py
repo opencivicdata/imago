@@ -14,11 +14,19 @@ def get_field_list(model, without=None):
 
 
 def get_fields(root, fields):
-    def fwrap(obj):
+    def fwrap(obj, memo=None):
+        memo = memo if memo else set()
+        id_ = id(obj)
+        if id_ in memo:
+            # OK. If we're about to recurse over ourselves, let's
+            # go ahead and just return the ID.
+            return {"fields": ["id"]}
+        memo.add(id_)
+
         if isinstance(obj, dict):
             if obj == {} or obj.get("fields"):
                 return obj
-            obj = [(x, fwrap(y)) for x, y in obj.items()]
+            obj = [(x, fwrap(y, memo=memo)) for x, y in obj.items()]
             return {"fields": obj}
         return obj
     subfields = defaultdict(list)
