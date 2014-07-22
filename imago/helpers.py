@@ -55,30 +55,6 @@ def cachebusterable(fn):
     return _
 
 
-def callbackable(fn):
-    """
-    Deprecated as of Jul 17, 2014 (PRT)
-
-    Removed in favor of CORS.
-    """
-    def _(self, request, *args, **kwargs):
-        params = request.params
-        callback = None
-        if 'callback' in params:
-            callback = params.pop('callback')
-        response = fn(self, request, *args, **kwargs)
-        if callback:
-            response.content = (
-                callback.encode() + b"("
-                    + response.content
-                + b");"
-            )
-        return response
-    return _
-
-
-
-
 class PublicListEndpoint(ListEndpoint):
     methods = ['GET']
     per_page = 100
