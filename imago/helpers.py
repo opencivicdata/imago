@@ -18,15 +18,18 @@ def get_fields(root, fields):
         memo = memo if memo else set()
         id_ = id(obj)
         if id_ in memo:
-            # OK. If we're about to recurse over ourselves, let's
-            # go ahead and just return the ID.
-            return {"fields": ["id"]}
+            return None
         memo.add(id_)
 
         if isinstance(obj, dict):
             if obj == {} or obj.get("fields"):
                 return obj
-            obj = [(x, fwrap(y, memo=memo)) for x, y in obj.items()]
+            obj = list(filter(
+                lambda x: x[1] != None,
+                [(x, fwrap(y, memo=memo)) for x, y in obj.items()]
+            ))
+            if obj == []:
+                return None
             return {"fields": obj}
         return obj
     subfields = defaultdict(list)
