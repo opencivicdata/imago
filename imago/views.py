@@ -152,16 +152,26 @@ MEMBERSHIP_SERIALIZE = {
 }
 
 ORGANIZATION_SERIALIZE['memberships'] = sfilter(
+    # Avoid org->memberships->org loop
     MEMBERSHIP_SERIALIZE,
     blacklist=['organization']
 )
 ORGANIZATION_SERIALIZE['memberships']['post'] = sfilter(
+    # Avoid org->memberships->post->org loop
     POST_SERIALIZE,
     blacklist=['organization']
 )
 
-PERSON_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
-POST_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
+PERSON_SERIALIZE['memberships'] = sfilter(
+    # Avoid person->memberships->person loop
+    MEMBERSHIP_SERIALIZE,
+    blacklist=['person']
+)
+
+POST_SERIALIZE['memberships'] = sfilter(
+    MEMBERSHIP_SERIALIZE,
+    blacklist=['post']
+)
 
 LINK_BASE = dict([
     ('links', {
