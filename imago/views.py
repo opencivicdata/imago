@@ -274,14 +274,37 @@ VOTE_SERIALIZE = dict([
 ])
 
 EVENT_AGENDA_ITEM = dict([
+    ('description', {}),
+    ('order', {}),
     ('subjects', lambda x: x.subjects),
-    ('related_entities', {}),
+    ('notes', {}),
+
+    ('related_entities', {
+        "note": {},
+        "entity_name": {},
+    }),
 ])
 
 EVENT_SERIALIZE = dict([
+    ('id', {}),
+    ('name', {}),
+    ('jurisdiction', JURISDICTION_SERIALIZE),
+    ('description', {}),
+    ('classification', {}),
+
     ('start_time', lambda x: dout(x.start_time)),
     ('end_time', lambda x: dout(x.end_time)),
-    ('jurisdiction', JURISDICTION_SERIALIZE),
+    ('timezone', {}),
+
+    ('all_day', {}),
+    ('status', {}),
+
+    ('location', {
+        "name": {},
+        "url": {},
+        "coordinates": {},  # XXX: Lambda
+    }),
+
     ('agenda', EVENT_AGENDA_ITEM),
     ('extras', lambda x: x.extras),
 ])
