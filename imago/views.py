@@ -247,7 +247,31 @@ BILL_SERIALIZE = dict([
     }),
 ])
 
-VOTE_SERIALIZE = {}
+VOTE_SERIALIZE = dict([
+    ("id", {}),
+    ("identifier", {}),
+    ("motion_text", {}),
+    ("motion_classification", {}),
+
+    ("start_date", {}),
+    ("end_date", {}),
+
+    ("result", {}),
+    ("organization", ORGANIZATION_SERIALIZE),
+    ("legislative_session", LEGISLATIVE_SESSION_SERIALIZE),
+    ("bill", BILL_SERIALIZE),
+    ("counts", {
+        "option": {},
+        "value": {},
+    }),
+    ("votes", {
+        "option": {},
+        "voter_name": {},
+        "voter": {},
+        "note": {},
+    }),
+    ("sources", SOURCES_SERIALIZE),
+])
 
 EVENT_AGENDA_ITEM = dict([
     ('subjects', lambda x: x.subjects),
