@@ -26,6 +26,14 @@ def sfilter(obj, blacklist):
     return ret
 
 
+#
+#
+#
+# OK. This is where we define *what* we allow to be public.
+#
+#
+#
+
 DIVISION_SERIALIZE = dict([
     ("id", {}),
     ("display_name", {}),
@@ -181,24 +189,62 @@ LINK_BASE = dict([
 ])
 
 BILL_SERIALIZE = dict([
+    ('id', {}),
+    ('identifier', {}),
     ('legislative_session', LEGISLATIVE_SESSION_SERIALIZE),
+
+    ('title', {}),
+
     ('from_organization', ORGANIZATION_SERIALIZE),
+
     ('classification', lambda x: x.classification),
     ('subject', lambda x: x.classification),
+
+    ('abstracts', {
+        "abstract": {},
+        "note": {},
+    }),
+
+    ('other_titles', {
+        "title": {},
+        "note": {},
+    }),
+
+    ('other_identifiers', {
+        "note": {},
+        "identifier": {},
+        "scheme": {},
+    }),
+
     ('actions', {
         'organization': ORGANIZATION_SERIALIZE,
+        'description': {},
+        'date': {},
         'classification': lambda x: x.classification,
+        'order': {},
     }),
+
+    ('sponsorships', {
+        "primary": {},
+        "classification": {},
+    }),
+
     ('documents', {
-        "note": {}, "date": {}, "links": LINK_BASE,
+        "note": {},
+        "date": {},
+        "links": LINK_BASE,
     }),
+
     ('versions', {
-        "note": {}, "date": {}, "links": LINK_BASE,
+        "note": {},
+        "date": {},
+        "links": LINK_BASE,
     }),
-    ('abstracts', {}),
-    ('other_titles', {}),
-    ('other_identifiers', {}),
-    ('sponsorships', {"primary": {}, "classification": {}}),
+
+    ('sponsorships', {
+        "primary": {},
+        "classification": {},
+    }),
 ])
 
 VOTE_SERIALIZE = {}
@@ -215,6 +261,15 @@ EVENT_SERIALIZE = dict([
     ('agenda', EVENT_AGENDA_ITEM),
     ('extras', lambda x: x.extras),
 ])
+
+
+#
+#
+#
+# OK. This is where we define the actuall class-based views.
+#
+#
+#
 
 
 class JurisdictionList(PublicListEndpoint):
@@ -316,24 +371,6 @@ class PersonDetail(PublicDetailEndpoint):
     model = Person
     serialize_config = PERSON_SERIALIZE
     default_fields = get_field_list(model)
-    # default_fields = [
-    #     'id', 'name', 'sort_name', 'image', 'gender', 'summary',
-    #     'national_identity', 'biography', 'birth_date', 'death_date',
-
-    #     'memberships.organization.id',
-    #     'memberships.organization.name',
-    #     'memberships.organization.classification',
-
-    #     'memberships.organization.jurisdiction.id',
-    #     'memberships.organization.jurisdiction.name',
-
-    #     'memberships.organization.jurisdiction.division.id',
-    #     'memberships.organization.jurisdiction.division.display_name',
-
-    #     'memberships.post.id',
-    #     'memberships.post.label',
-    #     'memberships.post.role',
-    # ]
 
 
 class BillList(PublicListEndpoint):
@@ -354,28 +391,6 @@ class BillDetail(PublicDetailEndpoint):
     model = Bill
     serialize_config = BILL_SERIALIZE
     default_fields = get_field_list(model)
-    # default_fields = [
-    #     'id', 'identifier', 'title', 'classification', 'abstracts',
-
-    #     'other_titles.title',
-    #     'other_titles.note',
-
-    #     'from_organization.name',
-    #     'from_organization.id',
-
-    #     'from_organization.jurisdiction.id',
-    #     'from_organization.jurisdiction.name',
-
-    #     'documents.note',
-    #     'documents.date',
-    #     'documents.links.url',
-    #     'documents.links.media_type',
-
-    #     'versions.note',
-    #     'versions.date',
-    #     'versions.links.url',
-    #     'versions.links.media_type',
-    # ]
 
 
 class VoteList(PublicListEndpoint):
