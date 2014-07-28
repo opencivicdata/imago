@@ -452,7 +452,7 @@ class VoteList(PublicListEndpoint):
     serialize_config = VOTE_SERIALIZE
     default_fields = [
         'result', 'motion_text', 'created_at', 'start_date', 'updated_at',
-        'motion_classification', 'extras',
+        'motion_classification', 'extras', 'id',
 
         'counts',
 
