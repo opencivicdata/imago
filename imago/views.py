@@ -282,6 +282,7 @@ EVENT_AGENDA_ITEM = dict([
     ('related_entities', {
         "note": {},
         "entity_name": {},
+        "entity_type": {},
     }),
 ])
 
