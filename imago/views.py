@@ -464,10 +464,13 @@ class BillDetail(PublicDetailEndpoint):
         'from_organization_id',
         'eventrelatedentity',
         'related_bills_reverse',
+        'legislative_session_id',
     ]) + [
         'from_organization.id',
         'from_organization.name',
+        'legislative_session.identifier',
     ]
+
 
 
 class VoteList(PublicListEndpoint):
