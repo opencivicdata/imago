@@ -253,8 +253,14 @@ VOTE_SERIALIZE = dict([
     ("motion_text", {}),
     ("motion_classification", {}),
 
-    ("start_date", {}),
-    ("end_date", {}),
+    ('created_at', lambda x: dout(x.created_at)),
+    ('updated_at', lambda x: dout(x.updated_at)),
+
+    ('start_date', {}),
+    ('end_date', {}),
+
+    ("extras", lambda x: x.extras),
+    ("motion_classification", lambda x: x.motion_classification),
 
     ("result", {}),
     ("organization", ORGANIZATION_SERIALIZE),
@@ -444,7 +450,15 @@ class BillDetail(PublicDetailEndpoint):
 class VoteList(PublicListEndpoint):
     model = VoteEvent
     serialize_config = VOTE_SERIALIZE
-    default_fields = []
+    default_fields = [
+        'result', 'motion_text', 'created_at', 'start_date', 'updated_at',
+        'motion_classification', 'extras',
+
+        'counts',
+
+        'bill.identifier', 'bill.id',
+        'organization.id', 'organization.name',
+    ]
 
 
 class VoteDetail(PublicDetailEndpoint):
