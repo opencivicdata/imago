@@ -1,7 +1,7 @@
 from opencivicdata.models import (Jurisdiction, Organization, Person,
                                   Bill, VoteEvent, Event)
 from .helpers import PublicListEndpoint, PublicDetailEndpoint, get_field_list
-from collections import defaultdict
+import copy
 import pytz
 
 
@@ -16,26 +16,86 @@ def dout(obj):
     return pytz.UTC.localize(obj).isoformat()
 
 
-DIVISION_SERIALIZE = defaultdict(dict)
+def sfilter(obj, blacklist):
+    """
+    Helper function to deep copy a dict, and pop elements off.
+    """
+    ret = copy.deepcopy(obj)
+    for el in blacklist:
+        ret.pop(el)
+    return ret
+
+
+DIVISION_SERIALIZE = dict([
+    ("id", {}),
+    ("display_name", {}),
+])
+
 SOURCES_SERIALIZE = {"note": {}, "url": {},}
 
-JURISDICTION_SERIALIZE = defaultdict(dict, [
+JURISDICTION_SERIALIZE = dict([
+    ("id", {}),
+    ("name", {}),
+    ("url", {}),
+    ("classification", {}),
     ("extras", lambda x: x.extras),
     ("feature_flags", lambda x: x.feature_flags),
     ("division", DIVISION_SERIALIZE),
 ])
 
-LEGISLATIVE_SESSION_SERIALIZE = defaultdict(dict, [
+LEGISLATIVE_SESSION_SERIALIZE = dict([
+    ('identifier', {}),
+    ('classification', {}),
     ('jurisdiction', JURISDICTION_SERIALIZE),
 ])
 
 
-ORGANIZATION_SERIALIZE = defaultdict(dict, [
+CONTACT_DETAIL_SERIALIZE = dict([
+    ("type", {}),
+    ("value", {}),
+    ("note", {}),
+    ("label", {}),
+])
+
+
+LINK_SERALIZE = dict([
+    ("note", {}),
+    ("url", {}),
+])
+
+IDENTIFIERS_SERIALIZE = {
+    "identifier": {},
+    "scheme": {},
+}
+
+OTHER_NAMES_SERIALIZE = {
+    "name": {},
+    "note": {},
+    "start_date": {},
+    "end_date": {},
+}
+
+ORGANIZATION_SERIALIZE = dict([
+    ("id", {}),
+    ("name", {}),
+    ("image", {}),
+    ("identifiers", IDENTIFIERS_SERIALIZE),
+    ("links", LINK_SERALIZE),
+    ("contact_details", CONTACT_DETAIL_SERIALIZE),
+    ("other_names", OTHER_NAMES_SERIALIZE),
+    ("classification", {}),
+    ("founding_date", {}),
+    ("dissolution_date", {}),
     ("jurisdiction", JURISDICTION_SERIALIZE),
     ("sources", SOURCES_SERIALIZE),
 ])
+
 ORGANIZATION_SERIALIZE['parent'] = ORGANIZATION_SERIALIZE
-ORGANIZATION_SERIALIZE['children'] = ORGANIZATION_SERIALIZE
+ORGANIZATION_SERIALIZE['children'] = sfilter(
+    ORGANIZATION_SERIALIZE,
+    blacklist=['parent']
+)
+
 ORGANIZATION_SERIALIZE['identifiers'] = {
     # Don't leak 'id'
     "identifier": {},
@@ -43,16 +103,41 @@ ORGANIZATION_SERIALIZE['identifiers'] = {
     "scheme": {},
 }
 
-PERSON_SERIALIZE = defaultdict(dict, [
+PERSON_SERIALIZE = dict([
+    ("id", {}),
+    ("name", {}),
+    ("sort_name", {}),
+    ("image", {}),
+    ("gender", {}),
+    ("summary", {}),
+    ("national_identity", {}),
+    ("biography", {}),
+    ("birth_date", {}),
+    ("death_date", {}),
+
+    ("identifiers", IDENTIFIERS_SERIALIZE),
+    ("other_names", OTHER_NAMES_SERIALIZE),
+    ("contact_details", CONTACT_DETAIL_SERIALIZE),
+    ("links", LINK_SERALIZE),
     ("sources", SOURCES_SERIALIZE),
 ])
 
-POST_SERIALIZE = defaultdict(dict, [
+POST_SERIALIZE = dict([
+    ("id", {}),
+    ("label", {}),
+    ("role", {}),
+    ("start_date", {}),
+    ("end_date", {}),
+    ("links", LINK_SERALIZE),
+    ("contact_details", CONTACT_DETAIL_SERIALIZE),
     ("organization", ORGANIZATION_SERIALIZE),
     ("division", DIVISION_SERIALIZE),
 ])
 
-ORGANIZATION_SERIALIZE['posts'] = POST_SERIALIZE
+ORGANIZATION_SERIALIZE['posts'] = sfilter(
+    POST_SERIALIZE,
+    blacklist=["organization"]
+)
 
 MEMBERSHIP_SERIALIZE = {
     # Explicit to avoid letting `id' leak out.
@@ -66,18 +151,26 @@ MEMBERSHIP_SERIALIZE = {
     "on_behalf_of": ORGANIZATION_SERIALIZE,
 }
 
-ORGANIZATION_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
+ORGANIZATION_SERIALIZE['memberships'] = sfilter(
+    MEMBERSHIP_SERIALIZE,
+    blacklist=['organization']
+)
+ORGANIZATION_SERIALIZE['memberships']['post'] = sfilter(
+    POST_SERIALIZE,
+    blacklist=['organization']
+)
+
 PERSON_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
 POST_SERIALIZE['memberships'] = MEMBERSHIP_SERIALIZE
 
-LINK_BASE = defaultdict(dict, [
+LINK_BASE = dict([
     ('links', {
         'media_type': {},
         'url': {},
     }),
 ])
 
-BILL_SERIALIZE = defaultdict(dict, [
+BILL_SERIALIZE = dict([
     ('legislative_session', LEGISLATIVE_SESSION_SERIALIZE),
     ('from_organization', ORGANIZATION_SERIALIZE),
     ('classification', lambda x: x.classification),
@@ -92,21 +185,20 @@ BILL_SERIALIZE = defaultdict(dict, [
     ('versions', {
         "note": {}, "date": {}, "links": LINK_BASE,
     }),
-    ('abstracts', defaultdict(dict)),
-    ('other_titles', defaultdict(dict)),
-    ('other_identifiers', defaultdict(dict)),
+    ('abstracts', {}),
+    ('other_titles', {}),
+    ('other_identifiers', {}),
     ('sponsorships', {"primary": {}, "classification": {}}),
 ])
 
-VOTE_SERIALIZE = defaultdict(dict, [
-])
+VOTE_SERIALIZE = {}
 
-EVENT_AGENDA_ITEM = defaultdict(dict, [
+EVENT_AGENDA_ITEM = dict([
     ('subjects', lambda x: x.subjects),
-    ('related_entities', defaultdict(dict)),
+    ('related_entities', {}),
 ])
 
-EVENT_SERIALIZE = defaultdict(dict, [
+EVENT_SERIALIZE = dict([
     ('start_time', lambda x: dout(x.start_time)),
     ('end_time', lambda x: dout(x.end_time)),
     ('jurisdiction', JURISDICTION_SERIALIZE),
