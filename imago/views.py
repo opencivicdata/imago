@@ -181,12 +181,10 @@ POST_SERIALIZE['memberships'] = sfilter(
     blacklist=['post']
 )
 
-LINK_BASE = dict([
-    ('links', {
-        'media_type': {},
-        'url': {},
-    }),
-])
+LINK_BASE = {
+    'media_type': {},
+    'url': {},
+}
 
 BILL_SERIALIZE = dict([
     ('id', {}),
