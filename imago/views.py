@@ -192,10 +192,16 @@ BILL_SERIALIZE = dict([
     ('id', {}),
     ('identifier', {}),
     ('legislative_session', LEGISLATIVE_SESSION_SERIALIZE),
+    ('legislative_session_id', {}),
 
     ('title', {}),
+    ("extras", lambda x: x.extras),
 
     ('from_organization', ORGANIZATION_SERIALIZE),
+    ('from_organization_id', {}),
+
+    ('created_at', lambda x: dout(x.created_at)),
+    ('updated_at', lambda x: dout(x.updated_at)),
 
     ('classification', lambda x: x.classification),
     ('subject', lambda x: x.classification),
@@ -214,6 +220,12 @@ BILL_SERIALIZE = dict([
         "note": {},
         "identifier": {},
         "scheme": {},
+    }),
+
+    ('related_bills', {
+        "identifier": {},
+        "legislative_session": LEGISLATIVE_SESSION_SERIALIZE,
+        "relation_type": {},
     }),
 
     ('actions', {
@@ -245,7 +257,12 @@ BILL_SERIALIZE = dict([
         "primary": {},
         "classification": {},
     }),
+
+    ("sources", SOURCES_SERIALIZE),
 ])
+
+BILL_SERIALIZE['related_bills']['bill'] = BILL_SERIALIZE
+
 
 VOTE_SERIALIZE = dict([
     ("id", {}),
@@ -278,6 +295,7 @@ VOTE_SERIALIZE = dict([
     }),
     ("sources", SOURCES_SERIALIZE),
 ])
+BILL_SERIALIZE['votes'] = VOTE_SERIALIZE
 
 EVENT_AGENDA_ITEM = dict([
     ('description', {}),
@@ -444,7 +462,14 @@ class BillList(PublicListEndpoint):
 class BillDetail(PublicDetailEndpoint):
     model = Bill
     serialize_config = BILL_SERIALIZE
-    default_fields = get_field_list(model)
+    default_fields = get_field_list(model, without=[
+        'from_organization_id',
+        'eventrelatedentity',
+        'related_bills_reverse',
+    ]) + [
+        'from_organization.id',
+        'from_organization.name',
+    ]
 
 
 class VoteList(PublicListEndpoint):
