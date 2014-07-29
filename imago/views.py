@@ -45,10 +45,16 @@ JURISDICTION_SERIALIZE = dict([
     ("id", {}),
     ("name", {}),
     ("url", {}),
+
+    ("updated_at", {}),
+    ("created_at", {}),
+
     ("classification", {}),
     ("extras", lambda x: x.extras),
     ("feature_flags", lambda x: x.feature_flags),
+
     ("division", DIVISION_SERIALIZE),
+    ("division_id", {}),
 ])
 
 LEGISLATIVE_SESSION_SERIALIZE = dict([
@@ -56,6 +62,11 @@ LEGISLATIVE_SESSION_SERIALIZE = dict([
     ('classification', {}),
     ('jurisdiction', JURISDICTION_SERIALIZE),
 ])
+
+JURISDICTION_SERIALIZE['legislative_sessions'] = sfilter(
+    LEGISLATIVE_SESSION_SERIALIZE,
+    blacklist=['jurisdiction']
+)
 
 
 CONTACT_DETAIL_SERIALIZE = dict([
@@ -87,6 +98,12 @@ ORGANIZATION_SERIALIZE = dict([
     ("id", {}),
     ("name", {}),
     ("image", {}),
+
+    ("created_at", {}),
+    ("updated_at", {}),
+
+    ("extras", lambda x: x.extras),
+
     ("identifiers", IDENTIFIERS_SERIALIZE),
     ("links", LINK_SERALIZE),
     ("contact_details", CONTACT_DETAIL_SERIALIZE),
@@ -94,6 +111,7 @@ ORGANIZATION_SERIALIZE = dict([
     ("classification", {}),
     ("founding_date", {}),
     ("dissolution_date", {}),
+    ("jurisdiction_id", {}),
     ("jurisdiction", JURISDICTION_SERIALIZE),
     ("sources", SOURCES_SERIALIZE),
 ])
@@ -424,6 +442,7 @@ class OrganizationDetail(PublicDetailEndpoint):
         'billactionrelatedentity',
         'eventrelatedentity',
         'eventparticipant',
+        'jurisdiction_id',
         'billsponsorship',
         'memberships',  # Below.
         'parent_id',  # Present as parent.id
