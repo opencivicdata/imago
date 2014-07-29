@@ -45,6 +45,13 @@ from .serialize import (JURISDICTION_SERIALIZE,
 import pytz
 
 
+"""
+This module contains the class-based views that we expose over the API.
+
+The common logic for these views are in imago.helpers.*Endpoint
+"""
+
+
 class JurisdictionList(PublicListEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
