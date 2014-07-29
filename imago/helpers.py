@@ -100,6 +100,10 @@ def get_fields(root, fields):
             concrete.append(field)
             continue
         prefix, postfix = field.split(".", 1)
+
+        if '.' not in postfix:
+            prefetch.add(prefix)
+
         subfields[prefix].append(postfix)
 
     try:
@@ -108,14 +112,13 @@ def get_fields(root, fields):
         raise FieldKeyError(*e.args)
 
     for key, fields in subfields.items():
-        prefetch.add(key)
         try:
             _prefetch, ret[key] = get_fields(root[key], fields)
         except FieldKeyError as e:
             e.field = "%s.%s" % (key, e.field)
             raise e
-        prefetch = prefetch.union({"%s__%s" % (key, x) for x in _prefetch})
 
+        prefetch = prefetch.union({"%s__%s" % (key, x) for x in _prefetch})
     return (prefetch, fwrap(ret))
 
 
@@ -243,14 +246,6 @@ class PublicListEndpoint(ListEndpoint):
         data = self.sort(data, sort_by)
 
         try:
-            data_page = self.paginate(data, page)
-        except EmptyPage:
-            raise HttpError(
-                404,
-                'No such page (heh, literally - its out of bounds)'
-            )
-
-        try:
             related, config = get_fields(self.serialize_config, fields=fields)
         except FieldKeyError as e:
             raise HttpError(400, "Error: You've asked for a field (%s) that "
@@ -261,6 +256,15 @@ class PublicListEndpoint(ListEndpoint):
 
         data = data.prefetch_related(*related)
         # print("Related: %s" % (related))
+        # print("Fields:  %s" % (", ".join(fields)))
+
+        try:
+            data_page = self.paginate(data, page)
+        except EmptyPage:
+            raise HttpError(
+                404,
+                'No such page (heh, literally - its out of bounds)'
+            )
 
         response = Http200({
             "meta": {
@@ -319,7 +323,10 @@ class PublicDetailEndpoint(DetailEndpoint):
             fields = params.pop('fields').split(",")
 
         related, config = get_fields(self.serialize_config, fields=fields)
+
         # print("Related: %s" % (related))
+        # print("Fields:  %s" % (", ".join(fields)))
+
         obj = self.model.objects.prefetch_related(*related).get(pk=pk)
         response = Http200(serialize(obj, **config))
         response['Access-Control-Allow-Origin'] = "*"
