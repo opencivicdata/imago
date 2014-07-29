@@ -61,10 +61,7 @@ class JurisdictionDetail(PublicDetailEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
     default_fields = get_field_list(model, without=[
-        'event_locations',
-        'events',
-        'organizations',
-        'division',
+        'event_locations', 'events', 'organizations', 'division',
     ]) + [
         'division.id', 'division.display_name'
     ]

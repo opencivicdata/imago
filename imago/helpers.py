@@ -33,6 +33,11 @@ from collections import defaultdict
 
 
 def get_field_list(model, without=None):
+    """
+    Get a list of all known field names on a Django model. Optionally,
+    you may exclude keys by passing a list of keys to avoid in the 'without'
+    kwarg.
+    """
     if without is None:
         without = set()
     else:
@@ -41,7 +46,23 @@ def get_field_list(model, without=None):
 
 
 def get_fields(root, fields):
+    """
+    Return a composed spec for the DjangoRestless serialize call
+    given a root spec dictionary and a list of fields.
+
+    Fields may be dotted to represent sub-elements, which will
+    traverse the root dictonary.
+
+    The result of this may be passed directly into serialize, and will
+    limit based on `fields`, rather then `include` or `exclude`.
+    """
+
     def fwrap(obj, memo=None):
+        """
+        Ensure this object can be passed into serialize by turning it from
+        a raw structure dict into a serialize spec. Most of the time
+        this is just wrapping dicts in {"fields": ...}.
+        """
         memo = memo if memo else set()
         id_ = id(obj)
         if id_ in memo:
@@ -59,6 +80,7 @@ def get_fields(root, fields):
                 return None
             return {"fields": obj}
         return obj
+
     subfields = defaultdict(list)
     concrete = []
     for field in fields:
@@ -74,6 +96,14 @@ def get_fields(root, fields):
 
 
 def cachebusterable(fn):
+    """
+    Allow front-end tools to pass a "_" pararm with different arguments
+    to work past cache. This is the default behavior for select2, and was
+    easy enough to avoid.
+
+    This ensures we don't get "_" in the view handler, avoding special
+    casing in multiple places.
+    """
     def _(self, request, *args, **kwargs):
         params = request.params
         if '_' in params:
@@ -83,27 +113,94 @@ def cachebusterable(fn):
 
 
 class PublicListEndpoint(ListEndpoint):
+    """
+    Imago public list API helper class.
+
+    This class exists to be subclassed by concrete views, and builds in
+    sane default behavior for all list views.
+
+    Critically it allows for:
+
+         - Filtering
+         - Sorting
+         - Pagination
+         - Meta-dictionary for the clients
+         - Opinionated serializion with the helpers above.
+
+    This allows our views to be declarative, and allow for subclass overriding
+    of methods when needed.
+
+    Access-Control-Allow-Origin is currently always set to "*", since this
+    is a global read-only API.
+
+    As a result, JSONP is disabled. Read more on using CORS:
+       - http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+
+    The 'get' class-based view method invokes the following helpers:
+
+
+        [ Methods ]
+         - get_query_set  | Get the Django query set for the request.
+         - filter         | Filter the resulting query set.
+         - sort           | Sort the filtered query set
+         - paginate       | Paginate the sorted query set
+
+
+        [ Object Properties ]
+         - model            | Django ORM Model / class to query using.
+         - per_page         | Objects to show per-page.
+
+         - default_fields   | If no `fields` param is passed in, use this
+                            | to limit the `serialize_config`.
+
+         - serialize_config | Object serializion to use. Many are in
+                            | the imago.serialize module
+    """
+
     methods = ['GET']
     per_page = 100
     serialize_config = {}
     default_fields = []
 
     def adjust_filters(self, params):
+        """
+        Adjust the filter params from within the `filter' call.
+        """
         return params
 
     def filter(self, data, **kwargs):
+        """
+        Filter the Django query set.
+
+        THe kwargs will be unpacked into Django directly, letting you
+        use full Django query syntax here.
+        """
         kwargs = self.adjust_filters(kwargs)
         return data.filter(**kwargs)
 
     def sort(self, data, sort_by):
+        """
+        Sort the Django query set. The sort_by param will be
+        unpacked into 'order_by' directly.
+        """
         return data.order_by(*sort_by)
 
     def paginate(self, data, page):
+        """
+        Paginate the Django response. It will default to
+        `self.per_page` as the `per_page` argument to the built-in
+        Django `Paginator`. This will return `paginator.page` for the
+        page number passed in.
+        """
         paginator = Paginator(data, per_page=self.per_page)
         return paginator.page(page)
 
     @cachebusterable
     def get(self, request, *args, **kwargs):
+        """
+        Default 'GET' class-based view.
+        """
+
         params = request.params
         page = 1
         if 'page' in params:
@@ -146,14 +243,35 @@ class PublicListEndpoint(ListEndpoint):
         response['Access-Control-Allow-Origin'] = "*"
         return response
 
-    @classmethod
-    def get_serialize_config(cls, fields=None):
-        if fields is None:
-            fields = cls.default_fields
-        return {"fields": [(x, cls.serialize_config[x]) for x in fields]}
-
 
 class PublicDetailEndpoint(DetailEndpoint):
+    """
+    Imago public detail view API helper class.
+
+    This class exists to be subclassed by concrete views, and builds in
+    sane default behavior for all list views.
+
+    This allows our views to be declarative, and allow for subclass overriding
+    of methods when needed.
+
+    Access-Control-Allow-Origin is currently always set to "*", since this
+    is a global read-only API.
+
+    As a result, JSONP is disabled. Read more on using CORS:
+       - http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+
+
+    The 'get' class-based view method uses the following object properties:
+
+         - model            | Django ORM Model / class to query using.
+
+         - default_fields   | If no `fields` param is passed in, use this
+                            | to limit the `serialize_config`.
+
+         - serialize_config | Object serializion to use. Many are in
+                            | the imago.serialize module
+    """
+
     methods = ['GET']
 
     @cachebusterable
