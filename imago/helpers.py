@@ -286,8 +286,6 @@ class PublicListEndpoint(ListEndpoint):
 
         if settings.DEBUG:
             end_time = datetime.datetime.utcnow()
-
-        if settings.DEBUG:
             response['debug'] = {
                 "prefetch_fields": list(related),
                 "page": page,
