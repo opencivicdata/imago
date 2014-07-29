@@ -218,10 +218,7 @@ POST_SERIALIZE['memberships'] = sfilter(
     blacklist=['post']
 )
 
-LINK_BASE = {
-    'media_type': {},
-    'url': {},
-}
+LINK_BASE = {'media_type': {}, 'url': {}}
 
 BILL_SERIALIZE = dict([
     ('id', {}),
@@ -241,55 +238,22 @@ BILL_SERIALIZE = dict([
     ('classification', lambda x: x.classification),
     ('subject', lambda x: x.classification),
 
-    ('abstracts', {
-        "abstract": {},
-        "note": {},
-    }),
+    ('abstracts', {"abstract": {}, "note": {}}),
+    ('other_titles', {"title": {}, "note": {}}),
+    ('other_identifiers', {"note": {}, "identifier": {}, "scheme": {}}),
 
-    ('other_titles', {
-        "title": {},
-        "note": {},
-    }),
+    ('related_bills', {"identifier": {},
+                       "legislative_session": LEGISLATIVE_SESSION_SERIALIZE,
+                       "relation_type": {}}),
 
-    ('other_identifiers', {
-        "note": {},
-        "identifier": {},
-        "scheme": {},
-    }),
+    ('actions', {'organization': ORGANIZATION_SERIALIZE, 'description': {},
+                 'date': {}, 'classification': lambda x: x.classification,
+                 'order': {}}),
 
-    ('related_bills', {
-        "identifier": {},
-        "legislative_session": LEGISLATIVE_SESSION_SERIALIZE,
-        "relation_type": {},
-    }),
-
-    ('actions', {
-        'organization': ORGANIZATION_SERIALIZE,
-        'description': {},
-        'date': {},
-        'classification': lambda x: x.classification,
-        'order': {},
-    }),
-
-    ('sponsorships', {
-        "primary": {},
-        "classification": {},
-        "entity_name": {},
-        "entity_type": {},
-        "entity_id": {},
-    }),
-
-    ('documents', {
-        "note": {},
-        "date": {},
-        "links": LINK_BASE,
-    }),
-
-    ('versions', {
-        "note": {},
-        "date": {},
-        "links": LINK_BASE,
-    }),
+    ('sponsorships', {"primary": {}, "classification": {}, "entity_name": {},
+                      "entity_type": {}, "entity_id": {}}),
+    ('documents', {"note": {}, "date": {}, "links": LINK_BASE}),
+    ('versions', {"note": {}, "date": {}, "links": LINK_BASE}),
 
     ("sources", SOURCES_SERIALIZE),
 ])
@@ -319,16 +283,8 @@ VOTE_SERIALIZE = dict([
 
     ('bill_id', {}),
     ("bill", BILL_SERIALIZE),
-    ("counts", {
-        "option": {},
-        "value": {},
-    }),
-    ("votes", {
-        "option": {},
-        "voter_name": {},
-        "voter": {},
-        "note": {},
-    }),
+    ("counts", {"option": {}, "value": {}}),
+    ("votes", {"option": {}, "voter_name": {}, "voter": {}, "note": {}}),
     ("sources", SOURCES_SERIALIZE),
 ])
 
@@ -344,12 +300,8 @@ EVENT_AGENDA_ITEM = dict([
     ('subjects', lambda x: x.subjects),
     ('notes', {}),
 
-    ('related_entities', {
-        "note": {},
-        "entity_name": {},
-        "entity_type": {},
-        "entity_id": {},
-    }),
+    ('related_entities', {"note": {}, "entity_name": {}, "entity_type": {},
+                          "entity_id": {}}),
 ])
 
 EVENT_SERIALIZE = dict([
@@ -360,25 +312,11 @@ EVENT_SERIALIZE = dict([
     ('description', {}),
     ('classification', {}),
 
-    ('participants', {
-        'note': {},
-        "entity_name": {},
-        "entity_type": {},
-        "entity_id": {},
-    }),
+    ('participants', {'note': {}, "entity_name": {}, "entity_type": {},
+                      "entity_id": {}}),
 
-    ('documents', {
-        "note": {},
-        "date": {},
-        "links": LINK_BASE,
-    }),
-
-    ('media', {
-        "note": {},
-        "date": {},
-        "offset": {},
-        "links": LINK_SERALIZE,
-    }),
+    ('documents', {"note": {}, "date": {}, "links": LINK_BASE}),
+    ('media', {"note": {}, "date": {}, "offset": {}, "links": LINK_SERALIZE}),
 
     ("links", LINK_SERALIZE),
 
@@ -392,15 +330,10 @@ EVENT_SERIALIZE = dict([
     ('all_day', {}),
     ('status', {}),
 
-    ('location', {
-        "name": {},
-        "url": {},
-    }),
+    ('location', {"name": {}, "url": {}}),
 
     ('agenda', EVENT_AGENDA_ITEM),
     ('extras', lambda x: x.extras),
 
     ("sources", SOURCES_SERIALIZE),
 ])
-
-
