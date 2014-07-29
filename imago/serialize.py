@@ -25,6 +25,27 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+def dout(obj):
+    """
+    Helper function to ensure that we're always printing internal
+    datetime objects in a fully qualified UTC timezone. This will
+    let 'None' values pass through untouched.
+    """
+    if obj is None:
+        return
+    return pytz.UTC.localize(obj).isoformat()
+
+
+def sfilter(obj, blacklist):
+    """
+    Helper function to deep copy a dict, and pop elements off.
+    """
+    ret = copy.deepcopy(obj)
+    for el in blacklist:
+        ret.pop(el)
+    return ret
+
+
 DIVISION_SERIALIZE = dict([
     ("id", {}),
     ("display_name", {}),

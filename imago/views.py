@@ -34,9 +34,7 @@ from opencivicdata.models import (Jurisdiction,
 
 from .helpers import (PublicListEndpoint,
                       PublicDetailEndpoint,
-                      get_field_list,
-                      dout,
-                      sfilter)
+                      get_field_list)
 
 from .serialize import (JURISDICTION_SERIALIZE,
                         ORGANIZATION_SERIALIZE,
