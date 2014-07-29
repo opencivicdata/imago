@@ -55,14 +55,17 @@ class FieldKeyError(KeyError):
 
 def get_fields(root, fields):
     """
-    Return a composed spec for the DjangoRestless serialize call
-    given a root spec dictionary and a list of fields.
+    Return a list of objects to prefetch and a composed spec for the
+    DjangoRestless serialize call given a root spec dictionary and a list
+    of fields.
 
     Fields may be dotted to represent sub-elements, which will
     traverse the root dictonary.
 
-    The result of this may be passed directly into serialize, and will
-    limit based on `fields`, rather then `include` or `exclude`.
+    This function returns a tuple, prefetch-able fields, and a serialize
+    function spec. The result of the latter may be passed directly into
+    serialize, and will limit based on `fields`, rather then `include` or
+    `exclude`.
     """
 
     def fwrap(obj, memo=None):
@@ -89,6 +92,7 @@ def get_fields(root, fields):
             return {"fields": obj}
         return obj
 
+    prefetch = set([])
     subfields = defaultdict(list)
     concrete = []
     for field in fields:
@@ -104,13 +108,15 @@ def get_fields(root, fields):
         raise FieldKeyError(*e.args)
 
     for key, fields in subfields.items():
+        prefetch.add(key)
         try:
-            ret[key] = get_fields(root[key], fields)
+            _prefetch, ret[key] = get_fields(root[key], fields)
         except FieldKeyError as e:
-            e.field = "%s.%s" % (e.field, key)
+            e.field = "%s.%s" % (key, e.field)
             raise e
+        prefetch = prefetch.union({"%s__%s" % (key, x) for x in _prefetch})
 
-    return fwrap(ret)
+    return (prefetch, fwrap(ret))
 
 
 def cachebusterable(fn):
@@ -213,14 +219,6 @@ class PublicListEndpoint(ListEndpoint):
         paginator = Paginator(data, per_page=self.per_page)
         return paginator.page(page)
 
-    def prefetch(self, data, fields):
-        """
-        prefitch the Django query set for view off of the fields.
-        """
-        related = {x.rsplit(".", 1)[0].replace(
-            ".", "__") for x in fields if '.' in x}
-        return data.prefetch_related(*related)
-
     @cachebusterable
     def get(self, request, *args, **kwargs):
         """
@@ -243,7 +241,6 @@ class PublicListEndpoint(ListEndpoint):
         data = self.get_query_set(request, *args, **kwargs)
         data = self.filter(data, **params)
         data = self.sort(data, sort_by)
-        data = self.prefetch(data, fields)
 
         try:
             data_page = self.paginate(data, page)
@@ -254,13 +251,16 @@ class PublicListEndpoint(ListEndpoint):
             )
 
         try:
-            config = get_fields(self.serialize_config, fields=fields)
+            related, config = get_fields(self.serialize_config, fields=fields)
         except FieldKeyError as e:
             raise HttpError(400, "Error: You've asked for a field (%s) that "
                             "is invalid. Check the docs for this model." % (
                                 e.field))
         except KeyError as e:
             raise HttpError(400, "Error: Invalid field: %s" % (e))
+
+        data = data.prefetch_related(*related)
+        # print("Related: %s" % (related))
 
         response = Http200({
             "meta": {
@@ -318,11 +318,9 @@ class PublicDetailEndpoint(DetailEndpoint):
         if 'fields' in params:
             fields = params.pop('fields').split(",")
 
-        related = {x.rsplit(".", 1)[0].replace(
-            ".", "__") for x in fields if '.' in x}
-
+        related, config = get_fields(self.serialize_config, fields=fields)
+        # print("Related: %s" % (related))
         obj = self.model.objects.prefetch_related(*related).get(pk=pk)
-        config = get_fields(self.serialize_config, fields=fields)
         response = Http200(serialize(obj, **config))
         response['Access-Control-Allow-Origin'] = "*"
 
