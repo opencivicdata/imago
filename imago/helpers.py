@@ -31,6 +31,8 @@ from restless.models import serialize
 from restless.http import HttpError, Http200
 from collections import defaultdict
 from django.conf import settings
+from django.db import connections
+
 import datetime
 import math
 
@@ -271,6 +273,7 @@ class PublicListEndpoint(ListEndpoint):
 
         if settings.DEBUG:
             start_time = datetime.datetime.utcnow()
+            start_queries = len(connections['default'].queries)
 
         response = {
             "meta": {
@@ -286,16 +289,32 @@ class PublicListEndpoint(ListEndpoint):
 
         if settings.DEBUG:
             end_time = datetime.datetime.utcnow()
+            connection = connections['default']
+            end_queries = len(connection.queries)
+
             response['debug'] = {
                 "prefetch_fields": list(related),
                 "page": page,
                 "sort_by": sort_by,
                 "field": fields,
+                "connection": {
+                    "query": {
+                        "count_start": start_queries,
+                        "count_end": end_queries,
+                        "count": (end_queries - start_queries),
+                    },
+                    "dsn": connection.connection.dsn,
+                    "vendor": connection.vendor,
+                    "pg_version": connection.pg_version,
+                    "psycopg2_version": ".".join([
+                        str(x) for x in connection.psycopg2_version
+                    ])
+                },
                 "time": {
                     "start": start_time.isoformat(),
                     "end": end_time.isoformat(),
                     "seconds": (end_time - start_time).total_seconds()
-                }
+                },
             }
 
         response = Http200(response)
