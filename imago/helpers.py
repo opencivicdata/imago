@@ -195,6 +195,14 @@ class PublicListEndpoint(ListEndpoint):
         paginator = Paginator(data, per_page=self.per_page)
         return paginator.page(page)
 
+    def prefetch(self, data, fields):
+        """
+        prefitch the Django query set for view off of the fields.
+        """
+        related = {x.rsplit(".", 1)[0].replace(
+            ".", "__") for x in fields if '.' in x}
+        return data.prefetch_related(*related)
+
     @cachebusterable
     def get(self, request, *args, **kwargs):
         """
@@ -217,6 +225,8 @@ class PublicListEndpoint(ListEndpoint):
         data = self.get_query_set(request, *args, **kwargs)
         data = self.filter(data, **params)
         data = self.sort(data, sort_by)
+        data = self.prefetch(data, fields)
+
         try:
             data_page = self.paginate(data, page)
         except EmptyPage:
@@ -282,7 +292,10 @@ class PublicDetailEndpoint(DetailEndpoint):
         if 'fields' in params:
             fields = params.pop('fields').split(",")
 
-        obj = self.model.objects.get(pk=pk)
+        related = {x.rsplit(".", 1)[0].replace(
+            ".", "__") for x in fields if '.' in x}
+
+        obj = self.model.objects.prefetch_related(*related).get(pk=pk)
         config = get_fields(self.serialize_config, fields=fields)
         response = Http200(serialize(obj, **config))
         response['Access-Control-Allow-Origin'] = "*"
