@@ -30,6 +30,7 @@ from restless.modelviews import ListEndpoint, DetailEndpoint
 from restless.models import serialize
 from restless.http import HttpError, Http200
 from collections import defaultdict
+import math
 
 
 def get_field_list(model, without=None):
@@ -271,7 +272,7 @@ class PublicListEndpoint(ListEndpoint):
                 "count": len(data_page.object_list),
                 "page": page,
                 "per_page": self.per_page,
-                "max_page": data_page.end_index(),
+                "max_page": math.ceil(data.count() / self.per_page),
                 "total_count": data.count(),
             },
             "results": [
