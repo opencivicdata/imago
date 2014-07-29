@@ -45,6 +45,14 @@ def get_field_list(model, without=None):
     return list(set(model._meta.get_all_field_names()) - without)
 
 
+class FieldKeyError(KeyError):
+    def __init__(self, field):
+        self.field = field
+
+    def __str__(self):
+        return "<FieldKeyError: %s>" % (self.field)
+
+
 def get_fields(root, fields):
     """
     Return a composed spec for the DjangoRestless serialize call
@@ -89,9 +97,19 @@ def get_fields(root, fields):
             continue
         prefix, postfix = field.split(".", 1)
         subfields[prefix].append(postfix)
-    ret = {x: fwrap(root[x]) for x in concrete}
+
+    try:
+        ret = {x: fwrap(root[x]) for x in concrete}
+    except KeyError as e:
+        raise FieldKeyError(*e.args)
+
     for key, fields in subfields.items():
-        ret[key] = get_fields(root[key], fields)
+        try:
+            ret[key] = get_fields(root[key], fields)
+        except FieldKeyError as e:
+            e.field = "%s.%s" % (e.field, key)
+            raise e
+
     return fwrap(ret)
 
 
@@ -235,7 +253,15 @@ class PublicListEndpoint(ListEndpoint):
                 'No such page (heh, literally - its out of bounds)'
             )
 
-        config = get_fields(self.serialize_config, fields=fields)
+        try:
+            config = get_fields(self.serialize_config, fields=fields)
+        except FieldKeyError as e:
+            raise HttpError(400, "Error: You've asked for a field (%s) that "
+                            "is invalid. Check the docs for this model." % (
+                                e.field))
+        except KeyError as e:
+            raise HttpError(400, "Error: Invalid field: %s" % (e))
+
         response = Http200({
             "meta": {
                 "count": len(data_page.object_list),
