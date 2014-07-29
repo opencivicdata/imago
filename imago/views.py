@@ -278,7 +278,6 @@ VOTE_SERIALIZE = dict([
     ('end_date', {}),
 
     ("extras", lambda x: x.extras),
-    ("motion_classification", lambda x: x.motion_classification),
 
     ("result", {}),
     ("legislative_session", LEGISLATIVE_SESSION_SERIALIZE),
@@ -300,6 +299,8 @@ VOTE_SERIALIZE = dict([
     }),
     ("sources", SOURCES_SERIALIZE),
 ])
+
+
 BILL_SERIALIZE['votes'] = sfilter(
     VOTE_SERIALIZE,
     blacklist=['bill'],
@@ -535,7 +536,20 @@ class VoteDetail(PublicDetailEndpoint):
     default_fields = get_field_list(model, without=[
         'eventrelatedentity',
         'legislative_session_id',
-    ])
+        'bill',
+        'legislative_session',
+        'organization',
+        'organization_id',
+        'bill_id',
+    ]) + [
+        'bill.id',
+        'bill.identifier',
+        'bill.legislative_session.identifier',
+
+        'organization.id',
+        'organization.name',
+        'organization.classification',
+    ]
 
 
 class BillDetail(PublicDetailEndpoint):
