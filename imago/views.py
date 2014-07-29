@@ -123,6 +123,11 @@ PERSON_SERIALIZE = dict([
     ("birth_date", {}),
     ("death_date", {}),
 
+    ("created_at", {}),
+    ("updated_at", {}),
+
+    ("extras", lambda x: x.extras),
+
     ("identifiers", IDENTIFIERS_SERIALIZE),
     ("other_names", OTHER_NAMES_SERIALIZE),
     ("contact_details", CONTACT_DETAIL_SERIALIZE),
@@ -237,6 +242,9 @@ BILL_SERIALIZE = dict([
     ('sponsorships', {
         "primary": {},
         "classification": {},
+        "entity_name": {},
+        "entity_type": {},
+        "entity_id": {},
     }),
 
     ('documents', {
@@ -249,11 +257,6 @@ BILL_SERIALIZE = dict([
         "note": {},
         "date": {},
         "links": LINK_BASE,
-    }),
-
-    ('sponsorships', {
-        "primary": {},
-        "classification": {},
     }),
 
     ("sources", SOURCES_SERIALIZE),
@@ -308,6 +311,7 @@ EVENT_AGENDA_ITEM = dict([
         "note": {},
         "entity_name": {},
         "entity_type": {},
+        "entity_id": {},
     }),
 ])
 
@@ -315,8 +319,34 @@ EVENT_SERIALIZE = dict([
     ('id', {}),
     ('name', {}),
     ('jurisdiction', JURISDICTION_SERIALIZE),
+    ('jurisdiction_id', {}),
     ('description', {}),
     ('classification', {}),
+
+    ('participants', {
+        'note': {},
+        "entity_name": {},
+        "entity_type": {},
+        "entity_id": {},
+    }),
+
+    ('documents', {
+        "note": {},
+        "date": {},
+        "links": LINK_BASE,
+    }),
+
+    ('media', {
+        "note": {},
+        "date": {},
+        "offset": {},
+        "links": LINK_SERALIZE,
+    }),
+
+    ("links", LINK_SERALIZE),
+
+    ('created_at', {}),
+    ('updated_at', {}),
 
     ('start_time', lambda x: dout(x.start_time)),
     ('end_time', lambda x: dout(x.end_time)),
@@ -328,11 +358,12 @@ EVENT_SERIALIZE = dict([
     ('location', {
         "name": {},
         "url": {},
-        "coordinates": {},  # XXX: Lambda
     }),
 
     ('agenda', EVENT_AGENDA_ITEM),
     ('extras', lambda x: x.extras),
+
+    ("sources", SOURCES_SERIALIZE),
 ])
 
 
@@ -443,7 +474,27 @@ class PeopleList(PublicListEndpoint):
 class PersonDetail(PublicDetailEndpoint):
     model = Person
     serialize_config = PERSON_SERIALIZE
-    default_fields = get_field_list(model)
+    default_fields = get_field_list(model, without=[
+        'votes',
+        'billactionrelatedentity',
+        'eventparticipant',
+        'billsponsorship',
+        'eventrelatedentity',
+        'memberships',
+    ]) + [
+        'memberships.label',
+        'memberships.role',
+        'memberships.start_date',
+        'memberships.end_date',
+        'memberships.post.label',
+        'memberships.post.role',
+        'memberships.post.id',
+        'memberships.post.division.id',
+        'memberships.post.division.display_name',
+        'memberships.organization.id',
+        'memberships.organization.name',
+        'memberships.organization.jurisdiction.id',
+    ]
 
 
 class BillList(PublicListEndpoint):
@@ -522,10 +573,14 @@ class EventList(PublicListEndpoint):
         'agenda.description', 'agenda.order', 'agenda.subjects',
         'agenda.related_entities.note',
         'agenda.related_entities.entity_name',
+        'agenda.related_entities.entity_id',
+        'agenda.related_entities.entity_type',
     ]
 
 
 class EventDetail(PublicDetailEndpoint):
     model = Event
     serialize_config = EVENT_SERIALIZE
-    default_fields = get_field_list(model)
+    default_fields = get_field_list(model, without=[
+        'location_id',
+    ])
