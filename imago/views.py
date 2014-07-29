@@ -438,20 +438,10 @@ class OrganizationDetail(PublicDetailEndpoint):
     model = Organization
     serialize_config = ORGANIZATION_SERIALIZE
     default_fields = get_field_list(model, without=[
-        'memberships_on_behalf_of',
-        'billactionrelatedentity',
-        'eventrelatedentity',
-        'eventparticipant',
-        'jurisdiction_id',
-        'billsponsorship',
-        'memberships',  # Below.
-        'parent_id',  # Present as parent.id
-        'children',
-        'actions',
-        'parent',  # Below.
-        'posts',
-        'bills',
-        'votes',
+        'memberships_on_behalf_of', 'billactionrelatedentity',
+        'eventrelatedentity', 'eventparticipant', 'jurisdiction_id',
+        'billsponsorship', 'memberships', 'parent_id', 'children', 'actions',
+        'parent', 'posts', 'bills', 'votes',
     ]) + [
         'parent.id',
         'parent.name',
