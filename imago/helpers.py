@@ -30,6 +30,8 @@ from restless.modelviews import ListEndpoint, DetailEndpoint
 from restless.models import serialize
 from restless.http import HttpError, Http200
 from collections import defaultdict
+from django.conf import settings
+import datetime
 import math
 
 
@@ -267,19 +269,38 @@ class PublicListEndpoint(ListEndpoint):
                 'No such page (heh, literally - its out of bounds)'
             )
 
-        response = Http200({
+        if settings.DEBUG:
+            start_time = datetime.datetime.utcnow()
+
+        response = {
             "meta": {
                 "count": len(data_page.object_list),
                 "page": page,
                 "per_page": self.per_page,
                 "max_page": math.ceil(data.count() / self.per_page),
                 "total_count": data.count(),
-            },
-            "results": [
-                serialize(x, **config)
-                for x in data_page.object_list
+            }, "results": [
+                serialize(x, **config) for x in data_page.object_list
             ]
-        })
+        }
+
+        if settings.DEBUG:
+            end_time = datetime.datetime.utcnow()
+
+        if settings.DEBUG:
+            response['debug'] = {
+                "prefetch_fields": list(related),
+                "page": page,
+                "sort_by": sort_by,
+                "field": fields,
+                "time": {
+                    "start": start_time.isoformat(),
+                    "end": end_time.isoformat(),
+                    "seconds": (end_time - start_time).total_seconds()
+                }
+            }
+
+        response = Http200(response)
 
         response['Access-Control-Allow-Origin'] = "*"
         return response
