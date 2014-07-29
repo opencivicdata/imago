@@ -42,7 +42,6 @@ from .serialize import (JURISDICTION_SERIALIZE,
                         VOTE_SERIALIZE,
                         BILL_SERIALIZE,
                         EVENT_SERIALIZE)
-import copy
 import pytz
 
 
