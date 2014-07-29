@@ -26,6 +26,22 @@
 
 import copy
 
+"""
+The following specs in this file are used to limit exactly what we can
+and can not show over the API.
+
+This is primarally useful for ensuring:
+
+     - Implementation details don't leak through (such as membership.id)
+
+     - We can properly encode data that's getting sent out (such as
+       properly encoding datetime objects)
+
+
+When you add a new attribute to an object in `opencivicdata.models`, that
+attribute should be added below if it's a public member of the object.
+"""
+
 
 def dout(obj):
     """
@@ -48,11 +64,7 @@ def sfilter(obj, blacklist):
     return ret
 
 
-DIVISION_SERIALIZE = dict([
-    ("id", {}),
-    ("display_name", {}),
-])
-
+DIVISION_SERIALIZE = dict([("id", {}), ("display_name", {})])
 SOURCES_SERIALIZE = {"note": {}, "url": {},}
 
 JURISDICTION_SERIALIZE = dict([
@@ -83,12 +95,8 @@ JURISDICTION_SERIALIZE['legislative_sessions'] = sfilter(
 )
 
 
-CONTACT_DETAIL_SERIALIZE = dict([
-    ("type", {}),
-    ("value", {}),
-    ("note", {}),
-    ("label", {}),
-])
+CONTACT_DETAIL_SERIALIZE = dict([("type", {}), ("value", {}),
+                                 ("note", {}), ("label", {})])
 
 
 LINK_SERALIZE = dict([
@@ -96,10 +104,12 @@ LINK_SERALIZE = dict([
     ("url", {}),
 ])
 
+
 IDENTIFIERS_SERIALIZE = {
     "identifier": {},
     "scheme": {},
 }
+
 
 OTHER_NAMES_SERIALIZE = {
     "name": {},
@@ -107,6 +117,7 @@ OTHER_NAMES_SERIALIZE = {
     "start_date": {},
     "end_date": {},
 }
+
 
 ORGANIZATION_SERIALIZE = dict([
     ("id", {}),
@@ -130,11 +141,13 @@ ORGANIZATION_SERIALIZE = dict([
     ("sources", SOURCES_SERIALIZE),
 ])
 
+
 ORGANIZATION_SERIALIZE['parent'] = ORGANIZATION_SERIALIZE
 ORGANIZATION_SERIALIZE['children'] = sfilter(
     ORGANIZATION_SERIALIZE,
     blacklist=['parent']
 )
+
 
 ORGANIZATION_SERIALIZE['identifiers'] = {
     # Don't leak 'id'
@@ -142,6 +155,7 @@ ORGANIZATION_SERIALIZE['identifiers'] = {
     # Don't allow recuse into our own org.
     "scheme": {},
 }
+
 
 PERSON_SERIALIZE = dict([
     ("id", {}),
@@ -167,6 +181,7 @@ PERSON_SERIALIZE = dict([
     ("sources", SOURCES_SERIALIZE),
 ])
 
+
 POST_SERIALIZE = dict([
     ("id", {}),
     ("label", {}),
@@ -179,10 +194,12 @@ POST_SERIALIZE = dict([
     ("division", DIVISION_SERIALIZE),
 ])
 
+
 ORGANIZATION_SERIALIZE['posts'] = sfilter(
     POST_SERIALIZE,
     blacklist=["organization"]
 )
+
 
 MEMBERSHIP_SERIALIZE = {
     # Explicit to avoid letting `id' leak out.
@@ -196,16 +213,20 @@ MEMBERSHIP_SERIALIZE = {
     "on_behalf_of": ORGANIZATION_SERIALIZE,
 }
 
+
 ORGANIZATION_SERIALIZE['memberships'] = sfilter(
     # Avoid org->memberships->org loop
     MEMBERSHIP_SERIALIZE,
     blacklist=['organization']
 )
+
+
 ORGANIZATION_SERIALIZE['memberships']['post'] = sfilter(
     # Avoid org->memberships->post->org loop
     POST_SERIALIZE,
     blacklist=['organization']
 )
+
 
 PERSON_SERIALIZE['memberships'] = sfilter(
     # Avoid person->memberships->person loop
@@ -213,12 +234,15 @@ PERSON_SERIALIZE['memberships'] = sfilter(
     blacklist=['person']
 )
 
+
 POST_SERIALIZE['memberships'] = sfilter(
     MEMBERSHIP_SERIALIZE,
     blacklist=['post']
 )
 
+
 LINK_BASE = {'media_type': {}, 'url': {}}
+
 
 BILL_SERIALIZE = dict([
     ('id', {}),
@@ -258,6 +282,7 @@ BILL_SERIALIZE = dict([
     ("sources", SOURCES_SERIALIZE),
 ])
 
+
 BILL_SERIALIZE['related_bills']['bill'] = BILL_SERIALIZE
 
 
@@ -294,6 +319,7 @@ BILL_SERIALIZE['votes'] = sfilter(
     blacklist=['bill'],
 )
 
+
 EVENT_AGENDA_ITEM = dict([
     ('description', {}),
     ('order', {}),
@@ -303,6 +329,7 @@ EVENT_AGENDA_ITEM = dict([
     ('related_entities', {"note": {}, "entity_name": {}, "entity_type": {},
                           "entity_id": {}}),
 ])
+
 
 EVENT_SERIALIZE = dict([
     ('id', {}),
