@@ -293,7 +293,10 @@ VOTE_SERIALIZE = dict([
     }),
     ("sources", SOURCES_SERIALIZE),
 ])
-BILL_SERIALIZE['votes'] = VOTE_SERIALIZE
+BILL_SERIALIZE['votes'] = sfilter(
+    VOTE_SERIALIZE,
+    blacklist=['bill'],
+)
 
 EVENT_AGENDA_ITEM = dict([
     ('description', {}),
@@ -457,22 +460,6 @@ class BillList(PublicListEndpoint):
     ]
 
 
-class BillDetail(PublicDetailEndpoint):
-    model = Bill
-    serialize_config = BILL_SERIALIZE
-    default_fields = get_field_list(model, without=[
-        'from_organization_id',
-        'eventrelatedentity',
-        'related_bills_reverse',
-        'legislative_session_id',
-    ]) + [
-        'from_organization.id',
-        'from_organization.name',
-        'legislative_session.identifier',
-    ]
-
-
-
 class VoteList(PublicListEndpoint):
     model = VoteEvent
     serialize_config = VOTE_SERIALIZE
@@ -491,6 +478,38 @@ class VoteDetail(PublicDetailEndpoint):
     model = VoteEvent
     serialize_config = VOTE_SERIALIZE
     default_fields = get_field_list(model)
+
+
+class BillDetail(PublicDetailEndpoint):
+    model = Bill
+    serialize_config = BILL_SERIALIZE
+    default_fields = get_field_list(model, without=[
+        'from_organization_id',
+        'eventrelatedentity',
+        'related_bills_reverse',
+        'legislative_session_id',
+        'actions.organization',
+        'votes'
+    ]) + [
+        'from_organization.id',
+        'from_organization.name',
+        'legislative_session.identifier',
+
+        'actions.organization.id',
+        'actions.organization.name',
+        'actions.organization.jurisdiction.id',
+        'actions.organization.jurisdiction.classification',
+        'actions.organization.jurisdiction.name',
+        'actions.organization.jurisdiction.division.id',
+        'actions.organization.jurisdiction.division.display_name',
+
+        'votes.result',
+        'votes.motion_text',
+        'votes.start_date',
+        'votes.motion_classification',
+        'votes.id',
+        'votes.counts',
+    ]
 
 
 class EventList(PublicListEndpoint):
