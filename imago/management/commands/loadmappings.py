@@ -7,6 +7,8 @@ from django.db import transaction
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from ...models import DivisionGeometry
+from opencivicdata.divisions import Division
+from boundaries.models import BoundarySet
 
 
 def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=False):
@@ -14,24 +16,28 @@ def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=Fa
         ignore = re.compile(ignore)
     ignored = 0
     geoid_mapping = {}
-    filename = os.path.join(LOCAL_REPO, 'identifiers',
-                            'country-{}.csv'.format(settings.IMAGO_COUNTRY))
-    for row in csv.DictReader(open(filename, encoding='utf8')):
-        if row[key]:
-            geoid_mapping[row[key]] = row['id']
+
+    division_geometries = []
+
+    for div in Division.get('ocd-division/country:' + settings.IMAGO_COUNTRY).children(levels=100):
+        if div.attrs[key]:
+            geoid_mapping[div.attrs[key]] = div.id
 
     print('processing', boundary_set_id)
 
     boundary_set = BoundarySet.objects.get(pk=boundary_set_id)
-    for boundary in boundary_set.boundaries.all():
-        ocd_id = geoid_mapping.get(prefix+boundary.external_id)
+    for boundary in boundary_set.boundaries.values('external_id', 'id', 'name'):
+        ocd_id = geoid_mapping.get(prefix+boundary['external_id'])
         if ocd_id:
-            DivisionGeometry.objects.create(division_id=ocd_id, boundary=boundary)
-        elif not ignore or not ignore.match(boundary.name):
+            division_geometries.append(DivisionGeometry(division_id=ocd_id,
+                                                        boundary_id=boundary['id']))
+        elif not ignore or not ignore.match(boundary['name']):
             if not quiet:
-                print('unmatched external id', boundary, boundary.external_id)
+                print('unmatched external id', boundary['name'], boundary['external_id'])
         else:
             ignored += 1
+
+    DivisionGeometries.objects.bulk_create(division_geometries)
 
     if ignored:
         print('ignored {} unmatched external ids'.format(ignored))
