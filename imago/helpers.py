@@ -303,7 +303,7 @@ class PublicListEndpoint(ListEndpoint):
                         "count_end": end_queries,
                         "count": (end_queries - start_queries),
                     },
-                    "dsn": connection.connection.dsn,
+                    # "dsn": connection.connection.dsn,
                     "vendor": connection.vendor,
                     "pg_version": connection.pg_version,
                     "psycopg2_version": ".".join([
