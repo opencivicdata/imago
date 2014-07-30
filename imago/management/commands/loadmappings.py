@@ -37,7 +37,7 @@ def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=Fa
         else:
             ignored += 1
 
-    DivisionGeometries.objects.bulk_create(division_geometries)
+    DivisionGeometry.objects.bulk_create(division_geometries)
 
     if ignored:
         print('ignored {} unmatched external ids'.format(ignored))
