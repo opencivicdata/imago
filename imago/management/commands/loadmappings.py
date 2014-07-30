@@ -3,12 +3,10 @@ import os
 import csv
 from datetime import datetime
 from optparse import make_option
-
 from django.db import transaction
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-from ...models import DivisionGeometry, TemporalSet
-
+from ...models import DivisionGeometry
 
 
 def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=False):
@@ -24,20 +22,11 @@ def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=Fa
 
     print('processing', boundary_set_id)
 
-    # delete temporal set & mappings if they exist
-    tset = TemporalSet.objects.filter(boundary_set_id=boundary_set_id)
-    if tset:
-        print('Deleting existing TemporalSet')
-        tset[0].geometries.all().delete()
-        tset[0].delete()
-
-    # create temporal set
-    tset = TemporalSet.objects.create(boundary_set_id=boundary_set_id, start=start, end=end)
-    for boundary in tset.boundary_set.boundaries.all():
+    boundary_set = BoundarySet.objects.get(pk=boundary_set_id)
+    for boundary in boundary_set.boundaries.all():
         ocd_id = geoid_mapping.get(prefix+boundary.external_id)
         if ocd_id:
-            DivisionGeometry.objects.create(division_id=ocd_id, temporal_set=tset,
-                                            boundary=boundary)
+            DivisionGeometry.objects.create(division_id=ocd_id, boundary=boundary)
         elif not ignore or not ignore.match(boundary.name):
             if not quiet:
                 print('unmatched external id', boundary, boundary.external_id)
