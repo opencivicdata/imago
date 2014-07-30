@@ -12,6 +12,11 @@ setup(name='imago',
       description='Open Civic Data API',
       long_description='',
       platforms=['any'],
+      entry_points={
+          'console_scripts': [
+              'imago-debug = imago.cli:debug',
+          ]
+      },
       install_requires=[
           'pyelasticsearch>=0.6',
           'Django>=1.6',
