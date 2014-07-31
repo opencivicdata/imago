@@ -51,6 +51,9 @@ class Command(BaseCommand):
                     default=False, help='Be somewhat quiet.'),
     )
 
+
     def handle(self, *args, **options):
-        for set_id, d in settings.IMAGO_BOUNDARY_MAPPINGS.items():
-            load_mapping(set_id, quiet=options['quiet'], **d)
+        with transaction.atomic():
+            DivisionGeometry.objects.all().delete()
+            for set_id, d in settings.IMAGO_BOUNDARY_MAPPINGS.items():
+                load_mapping(set_id, quiet=options['quiet'], **d)
