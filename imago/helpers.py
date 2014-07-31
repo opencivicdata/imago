@@ -275,13 +275,15 @@ class PublicListEndpoint(ListEndpoint):
             start_time = datetime.datetime.utcnow()
             start_queries = len(connections['default'].queries)
 
+        count = data_page.paginator.count
+
         response = {
             "meta": {
                 "count": len(data_page.object_list),
                 "page": page,
                 "per_page": self.per_page,
-                "max_page": math.ceil(data.count() / self.per_page),
-                "total_count": data.count(),
+                "max_page": math.ceil(count / self.per_page),
+                "total_count": count,
             }, "results": [
                 serialize(x, **config) for x in data_page.object_list
             ]
