@@ -8,7 +8,9 @@ from opencivicdata.models import (Jurisdiction,
                                   Person,
                                   Bill,
                                   VoteEvent,
-                                  Event)
+                                  Event,
+                                  Division
+                                 )
 
 from .helpers import (PublicListEndpoint,
                       PublicDetailEndpoint,
@@ -20,7 +22,7 @@ from .serialize import (JURISDICTION_SERIALIZE,
                         VOTE_SERIALIZE,
                         BILL_SERIALIZE,
                         EVENT_SERIALIZE)
-
+from restless.http import HttpError
 
 """
 This module contains the class-based views that we expose over the API.
@@ -241,3 +243,18 @@ class EventDetail(PublicDetailEndpoint):
     default_fields = get_field_list(model, without=[
         'location_id',
     ])
+
+
+class DivisionList(PublicListEndpoint):
+    model = Division
+    serialize_config = {'id': {}, 'name': {}, 'country': {}}
+    default_fields = ['id', 'name', 'country']
+
+    def adjust_filters(self, params):
+        lat = params.pop('lat', None)
+        lon = params.pop('lon', None)
+        if lat and lon:
+            params['geometries__boundary__shape__contains'] = 'POINT({} {})'.format(lon, lat)
+        elif lat or lon:
+            raise HttpError(400, "must specify lat & lon together")
+        return params

@@ -5,6 +5,7 @@ from imago.views import (JurisdictionList,
                          EventList,
                          BillList,
                          OrganizationList,
+                         DivisionList,
 
                          JurisdictionDetail,
                          PersonDetail,
@@ -21,6 +22,7 @@ urlpatterns = patterns(
     url(r'^events/$', EventList.as_view()),
     url(r'^organizations/$', OrganizationList.as_view()),
     url(r'^bills/$', BillList.as_view()),
+    url(r'^divisions/$', DivisionList.as_view()),
 
     # detail views
     url(r'^(?P<pk>ocd-jurisdiction/.+)/$', JurisdictionDetail.as_view()),
