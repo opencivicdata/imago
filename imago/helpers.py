@@ -122,7 +122,43 @@ def cachebusterable(fn):
     return _
 
 
-class PublicListEndpoint(ListEndpoint):
+class DebugMixin(object):
+
+    def start_debug(self):
+        if settings.DEBUG:
+            self.start_time = datetime.datetime.utcnow()
+            self.start_queries = len(connections['default'].queries)
+
+    def get_debug(self):
+        if settings.DEBUG:
+            end_time = datetime.datetime.utcnow()
+            connection = connections['default']
+            end_queries = len(connection.queries)
+
+            return {
+                "connection": {
+                    "query": {
+                        "count_start": self.start_queries,
+                        "count_end": end_queries,
+                        "count": (end_queries - self.start_queries),
+                        "list": connection.queries,
+                    },
+                    "dsn": connection.connection.dsn,
+                    "vendor": connection.vendor,
+                    "pg_version": connection.pg_version,
+                    "psycopg2_version": ".".join([
+                        str(x) for x in connection.psycopg2_version
+                    ])
+                },
+                "time": {
+                    "start": self.start_time.isoformat(),
+                    "end": end_time.isoformat(),
+                    "seconds": (end_time - self.start_time).total_seconds()
+                },
+            }
+
+
+class PublicListEndpoint(ListEndpoint, DebugMixin):
     """
     Imago public list API helper class.
 
@@ -205,6 +241,7 @@ class PublicListEndpoint(ListEndpoint):
         paginator = Paginator(data, per_page=self.per_page)
         return paginator.page(page)
 
+
     @cachebusterable
     def get(self, request, *args, **kwargs):
         """
@@ -249,9 +286,7 @@ class PublicListEndpoint(ListEndpoint):
                 'No such page (heh, literally - its out of bounds)'
             )
 
-        if settings.DEBUG:
-            start_time = datetime.datetime.utcnow()
-            start_queries = len(connections['default'].queries)
+        self.start_debug()
 
         count = data_page.paginator.count
 
@@ -267,36 +302,14 @@ class PublicListEndpoint(ListEndpoint):
             ]
         }
 
-        if settings.DEBUG:
-            end_time = datetime.datetime.utcnow()
-            connection = connections['default']
-            end_queries = len(connection.queries)
+        response['debug'] = self.get_debug()
 
-            response['debug'] = {
-                "prefetch_fields": list(related),
-                "page": page,
-                "sort_by": sort_by,
-                "field": fields,
-                "connection": {
-                    "query": {
-                        "count_start": start_queries,
-                        "count_end": end_queries,
-                        "count": (end_queries - start_queries),
-                        "list": connection.queries,
-                    },
-                    "dsn": connection.connection.dsn,
-                    "vendor": connection.vendor,
-                    "pg_version": connection.pg_version,
-                    "psycopg2_version": ".".join([
-                        str(x) for x in connection.psycopg2_version
-                    ])
-                },
-                "time": {
-                    "start": start_time.isoformat(),
-                    "end": end_time.isoformat(),
-                    "seconds": (end_time - start_time).total_seconds()
-                },
-            }
+        response['debug'].update({
+            "prefetch_fields": list(related),
+            "page": page,
+            "sort_by": sort_by,
+            "field": fields,
+        })
 
         response = Http200(response)
 
@@ -304,7 +317,7 @@ class PublicListEndpoint(ListEndpoint):
         return response
 
 
-class PublicDetailEndpoint(DetailEndpoint):
+class PublicDetailEndpoint(DetailEndpoint, DebugMixin):
     """
     Imago public detail view API helper class.
 
@@ -347,8 +360,14 @@ class PublicDetailEndpoint(DetailEndpoint):
         # print("Related: %s" % (related))
         # print("Fields:  %s" % (", ".join(fields)))
 
+        self.start_debug()
+
         obj = self.model.objects.prefetch_related(*related).get(pk=pk)
-        response = Http200(serialize(obj, **config))
+
+        serialized = serialize(obj, **config)
+        serialized['debug'] = self.get_debug()
+
+        response = Http200(serialized)
         response['Access-Control-Allow-Origin'] = "*"
 
         return response
