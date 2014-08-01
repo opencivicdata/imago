@@ -37,7 +37,7 @@ class JurisdictionList(PublicListEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
     default_fields = ['id', 'name', 'url', 'classification', 'feature_flags',
-                      'division.id', 'division.display_name']
+                      'division.id', 'division.name']
 
     def adjust_filters(self, params):
         if 'name' in params:
@@ -51,7 +51,7 @@ class JurisdictionDetail(PublicDetailEndpoint):
     default_fields = get_field_list(model, without=[
         'event_locations', 'events', 'organizations', 'division',
     ]) + [
-        'division.id', 'division.display_name'
+        'division.id', 'division.name'
     ]
 
 
@@ -89,7 +89,7 @@ class OrganizationDetail(PublicDetailEndpoint):
         'jurisdiction.id',
         'jurisdiction.name',
         'jurisdiction.division.id',
-        'jurisdiction.division.display_name',
+        'jurisdiction.division.name',
 
         'posts.id',
         'posts.label',
@@ -135,7 +135,7 @@ class PersonDetail(PublicDetailEndpoint):
         'memberships.post.role',
         'memberships.post.id',
         'memberships.post.division.id',
-        'memberships.post.division.display_name',
+        'memberships.post.division.name',
         'memberships.organization.id',
         'memberships.organization.name',
         'memberships.organization.jurisdiction.id',
@@ -213,7 +213,7 @@ class BillDetail(PublicDetailEndpoint):
         'actions.organization.jurisdiction.classification',
         'actions.organization.jurisdiction.name',
         'actions.organization.jurisdiction.division.id',
-        'actions.organization.jurisdiction.division.display_name',
+        'actions.organization.jurisdiction.division.name',
 
         'votes.result',
         'votes.motion_text',

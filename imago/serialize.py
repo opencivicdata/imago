@@ -44,7 +44,7 @@ def sfilter(obj, blacklist):
     return ret
 
 
-DIVISION_SERIALIZE = dict([("id", {}), ("display_name", {})])
+DIVISION_SERIALIZE = dict([("id", {}), ("name", {})])
 SOURCES_SERIALIZE = {"note": {}, "url": {},}
 
 JURISDICTION_SERIALIZE = dict([
