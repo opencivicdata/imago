@@ -345,6 +345,14 @@ EVENT_SERIALIZE = dict([
     ("sources", SOURCES_SERIALIZE),
 ])
 
+def boundary_to_dict(boundary):
+    d = boundary.as_dict()
+    d['boundary_set'] = {'start_date': boundary.set.start_date,
+                         'end_date': boundary.set.end_date,
+                         'name': boundary.set.name}
+    return d
+
+
 DIVISION_SERIALIZE = {
     'id': {},
     'name': {},
@@ -352,5 +360,6 @@ DIVISION_SERIALIZE = {
     'jurisdictions': JURISDICTION_SERIALIZE,
     'children': lambda division: [{'id': d.id, 'name': d.name}
                                    for d in Division.objects.children_of(division.id)],
-    'geometries': lambda division: [dg.boundary.as_dict() for dg in division.geometries.all()]
+    'geometries': lambda division: [boundary_to_dict(dg.boundary)
+                                    for dg in division.geometries.all()]
 }
