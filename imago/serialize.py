@@ -4,6 +4,7 @@
 
 import copy
 import pytz
+from opencivicdata.models import Division
 
 """
 The following specs in this file are used to limit exactly what we can
@@ -343,3 +344,13 @@ EVENT_SERIALIZE = dict([
 
     ("sources", SOURCES_SERIALIZE),
 ])
+
+DIVISION_SERIALIZE = {
+    'id': {},
+    'name': {},
+    'country': {},
+    'jurisdictions': JURISDICTION_SERIALIZE,
+    'children': lambda division: [{'id': d.id, 'name': d.name}
+                                   for d in Division.objects.children_of(division.id)],
+    'geometries': lambda division: [dg.boundary.as_dict() for dg in division.geometries.all()]
+}

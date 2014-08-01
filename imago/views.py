@@ -21,7 +21,9 @@ from .serialize import (JURISDICTION_SERIALIZE,
                         PERSON_SERIALIZE,
                         VOTE_SERIALIZE,
                         BILL_SERIALIZE,
-                        EVENT_SERIALIZE)
+                        EVENT_SERIALIZE,
+                        DIVISION_SERIALIZE
+                       )
 from restless.http import HttpError
 
 """
@@ -247,7 +249,7 @@ class EventDetail(PublicDetailEndpoint):
 
 class DivisionList(PublicListEndpoint):
     model = Division
-    serialize_config = {'id': {}, 'name': {}, 'country': {}}
+    serialize_config = DIVISION_SERIALIZE
     default_fields = ['id', 'name', 'country']
 
     def adjust_filters(self, params):
@@ -258,3 +260,9 @@ class DivisionList(PublicListEndpoint):
         elif lat or lon:
             raise HttpError(400, "must specify lat & lon together")
         return params
+
+
+class DivisionDetail(PublicDetailEndpoint):
+    model = Division
+    serialize_config = DIVISION_SERIALIZE
+    default_fields = ['id', 'name', 'country', 'jurisdictions', 'children', 'geometries']
