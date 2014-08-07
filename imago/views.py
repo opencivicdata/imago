@@ -42,6 +42,8 @@ class JurisdictionList(PublicListEndpoint):
     def adjust_filters(self, params):
         if 'name' in params:
             params['name__icontains'] = params.pop('name')
+        if 'feature_flags' in params:
+            params['feature_flags__contains'] = [params.pop('feature_flags')]
         return params
 
 
@@ -153,6 +155,13 @@ class BillList(PublicListEndpoint):
         'from_organization.jurisdiction.name',
     ]
 
+    def adjust_filters(self, params):
+        if 'subject' in params:
+            params['subject__contains'] = [params.pop('subject')]
+        if 'classification' in params:
+            params['classification__contains'] = [params.pop('classification')]
+        return params
+
 
 class VoteList(PublicListEndpoint):
     model = VoteEvent
@@ -167,6 +176,11 @@ class VoteList(PublicListEndpoint):
         'bill.identifier', 'bill.id',
         'organization.id', 'organization.name',
     ]
+
+    def adjust_filters(self, params):
+        if 'motion_classification' in params:
+            params['motion_classification__contains'] = [params.pop('motion_classification')]
+        return params
 
 
 class VoteDetail(PublicDetailEndpoint):
