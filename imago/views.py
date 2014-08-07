@@ -205,13 +205,11 @@ class BillDetail(PublicDetailEndpoint):
         'from_organization.name',
         'legislative_session.identifier',
 
+        'actions.description',
+        'actions.date',
+        'actions.classification',
         'actions.organization.id',
         'actions.organization.name',
-        'actions.organization.jurisdiction.id',
-        'actions.organization.jurisdiction.classification',
-        'actions.organization.jurisdiction.name',
-        'actions.organization.jurisdiction.division.id',
-        'actions.organization.jurisdiction.division.name',
 
         'votes.result',
         'votes.motion_text',
