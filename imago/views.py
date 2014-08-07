@@ -161,7 +161,8 @@ class VoteList(PublicListEndpoint):
         'result', 'motion_text', 'created_at', 'start_date', 'updated_at',
         'motion_classification', 'extras', 'id',
 
-        'counts',
+        'counts.value',
+        'counts.option',
 
         'bill.identifier', 'bill.id',
         'organization.id', 'organization.name',
