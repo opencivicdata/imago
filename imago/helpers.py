@@ -275,8 +275,6 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
             raise HttpError(400, "Error: Invalid field: %s" % (e))
 
         data = data.prefetch_related(*related)
-        # print("Related: %s" % (related))
-        # print("Fields:  %s" % (", ".join(fields)))
 
         try:
             data_page = self.paginate(data, page)
@@ -356,9 +354,6 @@ class PublicDetailEndpoint(DetailEndpoint, DebugMixin):
             fields = params.pop('fields').split(",")
 
         related, config = get_fields(self.serialize_config, fields=fields)
-
-        # print("Related: %s" % (related))
-        # print("Fields:  %s" % (", ".join(fields)))
 
         self.start_debug()
 
