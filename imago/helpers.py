@@ -269,9 +269,10 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         try:
             related, config = get_fields(self.serialize_config, fields=fields)
         except FieldKeyError as e:
-            raise HttpError(400, "Error: You've asked for a field (%s) that "
-                            "is invalid. Check the docs for this model." % (
-                                e.field))
+            raise HttpError(400, "Error: You've asked for a field ({}) that "
+                            "is invalid. Valid fields are: {}".format(
+                                e.field, ', '.join(self.serialize_config.keys()))
+                           )
         except KeyError as e:
             raise HttpError(400, "Error: Invalid field: %s" % (e))
 
@@ -280,10 +281,7 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         try:
             data_page = self.paginate(data, page, per_page)
         except EmptyPage:
-            raise HttpError(
-                404,
-                'No such page (heh, literally - its out of bounds)'
-            )
+            raise HttpError(404, 'No such page (heh, literally - its out of bounds)')
 
         self.start_debug()
 
