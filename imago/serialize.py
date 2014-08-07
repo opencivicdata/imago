@@ -240,7 +240,7 @@ BILL_SERIALIZE = dict([
     ('updated_at', lambda x: dout(x.updated_at)),
 
     ('classification', lambda x: x.classification),
-    ('subject', lambda x: x.classification),
+    ('subject', lambda x: x.subject),
 
     ('abstracts', {"abstract": {}, "note": {}}),
     ('other_titles', {"title": {}, "note": {}}),

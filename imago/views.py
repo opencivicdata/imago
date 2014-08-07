@@ -146,7 +146,7 @@ class BillList(PublicListEndpoint):
     model = Bill
     serialize_config = BILL_SERIALIZE
     default_fields = [
-        'id', 'identifier', 'title', 'classification',
+        'id', 'identifier', 'title', 'classification', 'subject',
 
         'from_organization.name',
         'from_organization.id',
