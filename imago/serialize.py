@@ -63,6 +63,12 @@ JURISDICTION_SERIALIZE = dict([
     ("division_id", {}),
 ])
 
+JURISDICTION_EMBED = {
+    'id': {},
+    'name': {},
+    'url': {},
+}
+
 LEGISLATIVE_SESSION_SERIALIZE = dict([
     ('identifier', {}),
     ('classification', {}),
@@ -314,7 +320,7 @@ EVENT_AGENDA_ITEM = dict([
 EVENT_SERIALIZE = dict([
     ('id', {}),
     ('name', {}),
-    ('jurisdiction', JURISDICTION_SERIALIZE),
+    ('jurisdiction', JURISDICTION_EMBED),
     ('jurisdiction_id', {}),
     ('description', {}),
     ('classification', {}),
@@ -337,7 +343,7 @@ EVENT_SERIALIZE = dict([
     ('all_day', {}),
     ('status', {}),
 
-    ('location', {"name": {}, "url": {}}),
+    ('location', {"name": {}, "url": {}, "coordinates": {}}),
 
     ('agenda', EVENT_AGENDA_ITEM),
     ('extras', lambda x: x.extras),
