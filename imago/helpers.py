@@ -204,7 +204,7 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
     """
 
     methods = ['GET']
-    per_page = 100
+    max_per_page = 100
     serialize_config = {}
     default_fields = []
 
@@ -231,14 +231,14 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         """
         return data.order_by(*sort_by)
 
-    def paginate(self, data, page):
+    def paginate(self, data, page, per_page):
         """
         Paginate the Django response. It will default to
         `self.per_page` as the `per_page` argument to the built-in
         Django `Paginator`. This will return `paginator.page` for the
         page number passed in.
         """
-        paginator = Paginator(data, per_page=self.per_page)
+        paginator = Paginator(data, per_page=per_page)
         return paginator.page(page)
 
 
@@ -249,9 +249,10 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         """
 
         params = request.params
-        page = 1
-        if 'page' in params:
-            page = int(params.pop('page'))
+
+        # default to page 1
+        page = int(params.pop('page', 1))
+        per_page = min(self.max_per_page, int(params.pop('per_page', self.max_per_page)))
 
         sort_by = []
         if 'sort_by' in params:
@@ -277,7 +278,7 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         data = data.prefetch_related(*related)
 
         try:
-            data_page = self.paginate(data, page)
+            data_page = self.paginate(data, page, per_page)
         except EmptyPage:
             raise HttpError(
                 404,
@@ -292,8 +293,8 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
             "meta": {
                 "count": len(data_page.object_list),
                 "page": page,
-                "per_page": self.per_page,
-                "max_page": math.ceil(count / self.per_page),
+                "per_page": per_page,
+                "max_page": math.ceil(count / per_page),
                 "total_count": count,
             }, "results": [
                 serialize(x, **config) for x in data_page.object_list
