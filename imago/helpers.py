@@ -299,14 +299,14 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
             ]
         }
 
-        response['debug'] = self.get_debug()
-
-        response['debug'].update({
-            "prefetch_fields": list(related),
-            "page": page,
-            "sort_by": sort_by,
-            "field": fields,
-        })
+        if settings.DEBUG:
+            response['debug'] = self.get_debug()
+            response['debug'].update({
+                "prefetch_fields": list(related),
+                "page": page,
+                "sort_by": sort_by,
+                "field": fields,
+            })
 
         response = Http200(response)
 
