@@ -127,6 +127,7 @@ def authenticated(fn):
     def _(self, request, *args, **kwargs):
         if not settings.USE_LOCKSMITH or (hasattr(request, 'apikey') and
                                           request.apikey.status == 'A'):
+            request.params.pop('apikey')
             return fn(self, request, *args, **kwargs)
         else:
             raise HttpError(403, "Authorization Required: obtain a key at " +
