@@ -130,7 +130,7 @@ def authenticated(fn):
             return fn(self, request, *args, **kwargs)
         else:
             raise HttpError(403, "Authorization Required: obtain a key at " +
-                            LOCKSMITH_REGISTRATION_URL)
+                            settings.LOCKSMITH_REGISTRATION_URL)
     return _
 
 
