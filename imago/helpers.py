@@ -268,8 +268,8 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         per_page = min(self.max_per_page, int(params.pop('per_page', self.max_per_page)))
 
         sort_by = []
-        if 'sort_by' in params:
-            sort_by = params.pop('sort_by').split(",")
+        if 'sort' in params:
+            sort_by = params.pop('sort').split(",")
 
         fields = self.default_fields
         if 'fields' in params:
@@ -317,7 +317,7 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
             response['debug'].update({
                 "prefetch_fields": list(related),
                 "page": page,
-                "sort_by": sort_by,
+                "sort": sort_by,
                 "field": fields,
             })
 
