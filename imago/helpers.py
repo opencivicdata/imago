@@ -127,7 +127,20 @@ def authenticated(fn):
     def _(self, request, *args, **kwargs):
         if not settings.USE_LOCKSMITH or (hasattr(request, 'apikey') and
                                           request.apikey.status == 'A'):
-            request.params.pop('apikey')
+
+            if 'apikey' in request.params:
+                # Why this is OK to check before pop'ing off:
+                #
+                # Above we have two cases in which we enter this line.
+                #
+                #
+                # First is that we're in debug / locksmithless.
+                #
+                # Second is that we are in locksmith, and we have an active
+                # key. As a result, we only need to pop this key off if it
+                # is present in the request, since we might be in debug mode.
+                request.params.pop('apikey')
+
             return fn(self, request, *args, **kwargs)
         else:
             raise HttpError(403, "Authorization Required: obtain a key at " +
