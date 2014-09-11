@@ -115,6 +115,15 @@ class PeopleList(PublicListEndpoint):
         'memberships.post.role',
     ]
 
+    def adjust_filters(self, params):
+        lat = params.pop('lat', None)
+        lon = params.pop('lon', None)
+        if lat and lon:
+            params['memberships__post__division__geometries__boundary__shape__contains'] = 'POINT({} {})'.format(lon, lat)
+        elif lat or lon:
+            raise HttpError(400, "must specify lat & lon together")
+        return params
+
 
 class PersonDetail(PublicDetailEndpoint):
     model = Person
