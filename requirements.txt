@@ -3,5 +3,5 @@ psycopg2
 pyelasticsearch
 django-appconf
 south
--e git://github.com/jamesturk/represent-boundaries.git#egg=boundaries
+represent-boundaries>=0.5.1
 DjangoRestless

@@ -20,5 +20,5 @@ setup(name='imago',
       install_requires=[
           'pyelasticsearch>=0.6',
           'Django>=1.6',
-          'represent-boundaries>=0.1',
+          'represent-boundaries>=0.5.1',
       ])
