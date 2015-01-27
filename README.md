@@ -17,7 +17,7 @@ Imago's `loadmappings` management command loads mappings between divisions manag
 * Set `IMAGO_COUNTRY` to a two-letter, lowercase country code like `'us'` in `settings.py`, to select which country's [Open Civic Data Division Identifiers](http://docs.opencivicdata.org/en/latest/proposals/0002.html) to use.
 * Set `IMAGO_BOUNDARY_MAPPINGS` in `settings.py`, a dictionary in which each key is the slug of a boundary set and each value is a dictionary, which has as keys:
   * `key`: The property of a division identifier that will be used for matching.
-  * `boundary_key`: Optional. Defaults to `external_id`. The property of a boundary that will be used for matching.
+  * `boundary_key`: Optional. Defaults to `external_id`. The property of a boundary that will be used for matching, or a lambda that takes a boundary as an argument and returns a string that will be used for matching.
   * `prefix`: Imago will prepend this prefix to the property of the boundary, identified by `boundary_key`, and will look for the division identifier whose property, identified by `key`, matches.
   * `ignore`: Optional. A regular expression string. If no match is found, and if either `ignore` is missing or the boundary name doesn't match the regular expression, a warning will be issued about the unmatched boundary.
 
