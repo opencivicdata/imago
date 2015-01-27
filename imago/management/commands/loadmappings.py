@@ -11,7 +11,7 @@ from opencivicdata.divisions import Division
 from boundaries.models import BoundarySet
 
 
-def load_mapping(boundary_set_id, start, key, prefix, ignore, end=None, quiet=False):
+def load_mapping(boundary_set_id, key, prefix, ignore=None, end=None, quiet=False, **kwargs):
     if ignore:
         ignore = re.compile(ignore)
     ignored = 0
