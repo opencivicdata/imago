@@ -11,6 +11,9 @@ Getting Started
 * [Install Represent Boundaries](http://represent.poplus.org/docs/install/).
 * Add `'imago'` to your `INSTALLED_APPS`.
 * Add `('', include('imago.urls')),` to `urls.py`.
+
+Imago's `loadmappings` management command loads mappings between divisions managed by [opencivicdata-django](https://github.com/opencivicdata/python-opencivicdata-django) and boundaries managed by Represent Boundaries. If mappings are not loaded, then the `lat` and `lon` filters on the [`/people/`](http://docs.opencivicdata.org/en/latest/api/search.html#person-search) and [`/divisions/`](http://docs.opencivicdata.org/en/latest/api/search.html#division-search) endpoints will not work, and geometries will not appear on the [`/divisions/`](http://docs.opencivicdata.org/en/latest/api/search.html#division-search) endpoint. For the command to succeed, you must set the `IMAGO_COUNTRY` and `IMAGO_BOUNDARY_MAPPINGS` settings:
+
 * Set `IMAGO_COUNTRY` to a two-letter, lowercase country code like `'us'` in `settings.py`, to select which country's [Open Civic Data Division Identifiers](http://docs.opencivicdata.org/en/latest/proposals/0002.html) to use.
 * Set `IMAGO_BOUNDARY_MAPPINGS` in `settings.py`, a dictionary in which each key is the slug of a boundary set and each value is a dictionary, which has as keys:
   * `key`: The property of a division identifier that will be used to match a boundary's `external_id`.
