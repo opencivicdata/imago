@@ -11,7 +11,7 @@ from opencivicdata.divisions import Division
 from boundaries.models import BoundarySet
 
 
-def load_mapping(boundary_set_id, key, prefix, ignore=None, end=None, quiet=False, **kwargs):
+def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id', ignore=None, end=None, quiet=False, **kwargs):
     if ignore:
         ignore = re.compile(ignore)
     ignored = 0
@@ -26,14 +26,14 @@ def load_mapping(boundary_set_id, key, prefix, ignore=None, end=None, quiet=Fals
     print('processing', boundary_set_id)
 
     boundary_set = BoundarySet.objects.get(pk=boundary_set_id)
-    for boundary in boundary_set.boundaries.values('external_id', 'id', 'name'):
-        ocd_id = geoid_mapping.get(prefix+boundary['external_id'])
+    for boundary in boundary_set.boundaries.values(boundary_key, 'id', 'name'):
+        ocd_id = geoid_mapping.get(prefix+boundary[boundary_key])
         if ocd_id:
             division_geometries.append(DivisionGeometry(division_id=ocd_id,
                                                         boundary_id=boundary['id']))
         elif not ignore or not ignore.match(boundary['name']):
             if not quiet:
-                print('unmatched external id', boundary['name'], boundary['external_id'])
+                print('unmatched external id', boundary['name'], boundary[boundary_key])
         else:
             ignored += 1
 
