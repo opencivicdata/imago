@@ -123,7 +123,7 @@ def cachebusterable(fn):
 
 
 def no_authentication_or_is_authenticated():
-    return not hasattr(settings, 'USE_LOCKSMITH') or not settings.USE_LOCKSMITH
+    return (not hasattr(settings, 'USE_LOCKSMITH') or not settings.USE_LOCKSMITH
             or hasattr(request, 'apikey') and request.apikey.status == 'A')
 
 def authenticated(fn):
