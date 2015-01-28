@@ -122,25 +122,15 @@ def cachebusterable(fn):
     return _
 
 
-def use_locksmith():
-    return (not hasattr(settings, 'USE_LOCKSMITH') or not settings.USE_LOCKSMITH)
-            and (hasattr(request, 'apikey') and request.apikey.status == 'A'):
+def no_authentication_or_is_authenticated():
+    return not hasattr(settings, 'USE_LOCKSMITH') or not settings.USE_LOCKSMITH
+            or hasattr(request, 'apikey') and request.apikey.status == 'A')
 
 def authenticated(fn):
     """ ensure that request.apikey is valid """
     def _(self, request, *args, **kwargs):
-        if use_locksmith():
+        if no_authentication_or_is_authenticated():
             if 'apikey' in request.params:
-                # Why this is OK to check before pop'ing off:
-                #
-                # Above we have two cases in which we enter this line.
-                #
-                #
-                # First is that we're in debug / locksmithless.
-                #
-                # Second is that we are in locksmith, and we have an active
-                # key. As a result, we only need to pop this key off if it
-                # is present in the request, since we might be in debug mode.
                 request.params.pop('apikey')
 
             return fn(self, request, *args, **kwargs)
