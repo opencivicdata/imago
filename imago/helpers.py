@@ -122,11 +122,14 @@ def cachebusterable(fn):
     return _
 
 
+def use_locksmith():
+    return (not hasattr(settings, 'USE_LOCKSMITH') or not settings.USE_LOCKSMITH)
+            and (hasattr(request, 'apikey') and request.apikey.status == 'A'):
+
 def authenticated(fn):
     """ ensure that request.apikey is valid """
     def _(self, request, *args, **kwargs):
-        if not hasattr(settings, 'USE_LOCKSMITH') or not settings.USE_LOCKSMITH or hasattr(request, 'apikey') and request.apikey.status == 'A':
-
+        if use_locksmith():
             if 'apikey' in request.params:
                 # Why this is OK to check before pop'ing off:
                 #
