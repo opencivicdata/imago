@@ -21,4 +21,5 @@ setup(name='imago',
           'pyelasticsearch>=0.6',
           'Django>=1.6',
           'represent-boundaries>=0.5.1',
+          'DjangoRestless>=0.9',
       ])
