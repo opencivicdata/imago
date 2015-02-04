@@ -30,7 +30,7 @@ def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id', ignor
         fields = []
     else:
         fields = [boundary_key]
-    for boundary in boundary_set.boundaries.values('id', 'name', *field):
+    for boundary in boundary_set.boundaries.values('id', 'name', *fields):
         if callable(boundary_key):
             boundary_property = boundary_key(boundary)
         else:
