@@ -15,6 +15,15 @@ import datetime
 import math
 
 
+def get_identifier_components(ocd_identifier):
+    """
+    Split an OCDID into its component parts and remove 'ocd' prefix.
+    Returns a tuple of type name and data, usually either a Division identifier or UUID.
+    """
+    head, tail = ocd_identifier.split('/', maxsplit=1)
+    return (head.lstrip('ocd-'), tail)
+
+
 def get_field_list(model, without=None):
     """
     Get a list of all known field names on a Django model. Optionally,
