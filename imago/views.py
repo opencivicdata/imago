@@ -14,7 +14,6 @@ from opencivicdata.models import (Jurisdiction,
 
 from .helpers import (PublicListEndpoint,
                       PublicDetailEndpoint,
-                      get_identifier_components,
                       get_field_list)
 
 from .serialize import (JURISDICTION_SERIALIZE,
@@ -26,7 +25,6 @@ from .serialize import (JURISDICTION_SERIALIZE,
                         DIVISION_SERIALIZE
                        )
 from restless.http import HttpError
-import uuid
 
 """
 This module contains the class-based views that we expose over the API.
@@ -99,6 +97,7 @@ class OrganizationDetail(PublicDetailEndpoint):
     ]
 
 
+
 class PeopleList(PublicListEndpoint):
     model = Person
     serialize_config = PERSON_SERIALIZE
@@ -168,13 +167,6 @@ class BillList(PublicListEndpoint):
     def adjust_filters(self, params):
         if 'subject' in params:
             params['subject__contains'] = [params.pop('subject')]
-        if 'sponsorships.id' in params:
-            entity_type, entity_id = get_identifier_components(params.pop('sponsorships.id'))
-            try:
-                params['sponsorships__id'] = uuid.UUID(entity_id)
-                params['sponsorships__entity_type'] = entity_type
-            except ValueError:
-                pass
         if 'classification' in params:
             params['classification__contains'] = [params.pop('classification')]
         return params
@@ -195,8 +187,6 @@ class VoteList(PublicListEndpoint):
     ]
 
     def adjust_filters(self, params):
-        if 'bill.id' in params:
-            params['bill__id'] = params.pop('bill.id')
         if 'motion_classification' in params:
             params['motion_classification__contains'] = [params.pop('motion_classification')]
         return params
@@ -267,23 +257,6 @@ class EventList(PublicListEndpoint):
         'agenda.related_entities.entity_id',
         'agenda.related_entities.entity_type',
     ]
-
-    def adjust_filters(self, params):
-        if 'participants.id' in params:
-            entity_type, entity_id = get_identifier_components(params.pop('participants.id'))
-            try:
-                params['participants__id'] = uuid.UUID(entity_id)
-                params['participants__entity_type'] = entity_type
-            except ValueError:
-                pass
-        if 'agenda.related_entities.id' in params:
-            entity_type, entity_id = get_identifier_components(params.pop('agenda.related_entities.id'))
-            try:
-                params['agenda__related_entities__id'] = uuid.UUID(entity_id)
-                params['agenda__related_entities__entity_type'] = entity_type
-            except ValueError:
-                pass
-        return params
 
 
 class EventDetail(PublicDetailEndpoint):
