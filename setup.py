@@ -21,6 +21,7 @@ setup(name='imago',
           'pytz'
           'pyelasticsearch>=0.6',
           'Django>=1.6',
+          'opencivicdata-django>=0.6.2',
           'represent-boundaries>=0.5.1',
           'DjangoRestless>=0.0.9',
       ])
