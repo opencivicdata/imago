@@ -18,6 +18,7 @@ setup(name='imago',
           ]
       },
       install_requires=[
+          'pytz'
           'pyelasticsearch>=0.6',
           'Django>=1.6',
           'represent-boundaries>=0.5.1',
