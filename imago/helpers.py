@@ -241,7 +241,12 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         use full Django query syntax here.
         """
         kwargs = self.adjust_filters(kwargs)
-        return data.filter(**kwargs)
+        try:
+            return data.filter(**kwargs)
+        except FieldError:
+            raise HttpError(400, "Error: You've passed an invalid filter parameter.")
+        except Exception:
+            raise HttpError(500, "Error: Something went wrong with your request")
 
     def sort(self, data, sort_by):
         """
@@ -282,12 +287,7 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
             fields = params.pop('fields').split(",")
 
         data = self.get_query_set(request, *args, **kwargs)
-        try:
-            data = self.filter(data, **params)
-        except FieldError:
-            raise HttpError(400, "Error: You've passed an invalid filter parameter.")
-        except Exception:
-            raise HttpError(500, "Error: Something went wrong with your request")
+        data = self.filter(data, **params)
         data = self.sort(data, sort_by)
         data = data.distinct("id")
 
