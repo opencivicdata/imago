@@ -1,4 +1,4 @@
-https://www.djangoproject.com/download/1.7c1/tarball/#egg=django
+Django>=1.7,<1.8
 psycopg2
 pyelasticsearch
 django-appconf
