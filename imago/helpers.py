@@ -4,6 +4,7 @@
 
 
 from django.core.paginator import Paginator, EmptyPage
+from django.core.exceptions import FieldError
 from restless.modelviews import ListEndpoint, DetailEndpoint
 from restless.models import serialize
 from restless.http import HttpError, Http200
@@ -281,7 +282,12 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
             fields = params.pop('fields').split(",")
 
         data = self.get_query_set(request, *args, **kwargs)
-        data = self.filter(data, **params)
+        try:
+            data = self.filter(data, **params)
+        except FieldError:
+            raise HttpError(400, "Error: You've passed an invalid filter parameter.")
+        except Exception:
+            raise HttpError(500, "Error: Something went wrong with your request")
         data = self.sort(data, sort_by)
         data = data.distinct("id")
 
