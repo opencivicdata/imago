@@ -234,7 +234,6 @@ BILL_SERIALIZE = dict([
     ('id', {}),
     ('identifier', {}),
     ('legislative_session', LEGISLATIVE_SESSION_SERIALIZE),
-    ('legislative_session_id', {}),
 
     ('title', {}),
     ("extras", lambda x: x.extras),

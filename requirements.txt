@@ -5,3 +5,5 @@ django-appconf
 south
 represent-boundaries>=0.5.1
 DjangoRestless
+opencivicdata-django
+pytz
