@@ -18,7 +18,7 @@ setup(name='imago',
           ]
       },
       install_requires=[
-          'pytz'
+          'pytz',
           'pyelasticsearch>=0.6',
           'Django>=1.6',
           'opencivicdata-django>=0.6.2',
