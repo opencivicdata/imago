@@ -25,6 +25,8 @@ from .serialize import (JURISDICTION_SERIALIZE,
                         DIVISION_SERIALIZE
                        )
 from restless.http import HttpError
+import datetime
+from django.db.models import Q
 
 """
 This module contains the class-based views that we expose over the API.
@@ -272,14 +274,28 @@ class DivisionList(PublicListEndpoint):
     serialize_config = DIVISION_SERIALIZE
     default_fields = ['id', 'name', 'country']
 
-    def adjust_filters(self, params):
-        lat = params.pop('lat', None)
-        lon = params.pop('lon', None)
-        if lat and lon:
-            params['geometries__boundary__shape__contains'] = 'POINT({} {})'.format(lon, lat)
-        elif lat or lon:
-            raise HttpError(400, "must specify lat & lon together")
-        return params
+    def filter(self, data, **params):
+        DATE_FORMAT = "%Y-%m-%d"
+        today = datetime.datetime.strftime(datetime.datetime.now(), DATE_FORMAT)
+
+        lat = params.get('lat')
+        lon = params.get('lon')
+        date = datetime.datetime.strptime(
+            params.get('date', today), DATE_FORMAT).date()
+
+        if params.get('date') and not (lat and lon):
+            raise HttpError(400, "If date specified, must also provide lat & lon")
+
+        if (lat and lon):
+            data = data.filter(
+                Q(geometries__boundary__set__start_date__lte=date) | Q(geometries__boundary__set__start_date=None),
+                Q(geometries__boundary__set__end_date__gte=date) | Q(geometries__boundary__set__end_date=None),
+                geometries__boundary__shape__contains='POINT({} {})'.format(lon, lat)
+            )
+        elif (lat and not lon) or (lon and not lat):
+            raise HttpError(400, "Must specify lat & lon together")
+
+        return data
 
 
 class DivisionDetail(PublicDetailEndpoint):
