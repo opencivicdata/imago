@@ -281,9 +281,9 @@ class DivisionList(PublicListEndpoint):
         lat = params.get('lat')
         lon = params.get('lon')
         date = datetime.datetime.strptime(
-            params.get('date', today), self.DATE_FORMAT).date()
+            params.get('date', today), DATE_FORMAT).date()
 
-        if params.get('date') and (lat and lon):
+        if params.get('date') and not (lat and lon):
             raise HttpError(400, "If date specified, must also provide lat & lon")
 
         if (lat and lon):
