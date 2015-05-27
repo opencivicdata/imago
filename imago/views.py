@@ -274,14 +274,17 @@ class DivisionList(PublicListEndpoint):
     serialize_config = DIVISION_SERIALIZE
     default_fields = ['id', 'name', 'country']
 
-    DATE_FORMAT = "%Y-%m-%d"
-    today = datetime.datetime.strftime(datetime.datetime.now(), DATE_FORMAT)
-
     def filter(self, data, **params):
-        lat = params.pop('lat', None)
-        lon = params.pop('lon', None)
+        DATE_FORMAT = "%Y-%m-%d"
+        today = datetime.datetime.strftime(datetime.datetime.now(), DATE_FORMAT)
+
+        lat = params.get('lat')
+        lon = params.get('lon')
         date = datetime.datetime.strptime(
-            params.pop('date', self.today), self.DATE_FORMAT).date()
+            params.get('date', today), self.DATE_FORMAT).date()
+
+        if params.get('date') and (lat and lon):
+            raise HttpError(400, "If date specified, must also provide lat & lon")
 
         if (lat and lon):
             data = data.filter(
@@ -290,12 +293,7 @@ class DivisionList(PublicListEndpoint):
                 geometries__boundary__shape__contains='POINT({} {})'.format(lon, lat)
             )
         elif (lat and not lon) or (lon and not lat):
-            raise HttpError(400, "must specify lat & lon together")
-        else:
-            data = data.filter(
-                Q(geometries__boundary__set__start_date__lte=date) | Q(geometries__boundary__set__start_date=None),
-                Q(geometries__boundary__set__end_date__gte=date) | Q(geometries__boundary__set__end_date=None)
-            )
+            raise HttpError(400, "Must specify lat & lon together")
 
         return data
 
