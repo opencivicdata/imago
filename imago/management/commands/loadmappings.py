@@ -1,17 +1,14 @@
 import re
-import os
-import csv
-from datetime import datetime
 from optparse import make_option
 from django.db import transaction
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from ...models import DivisionGeometry
 from opencivicdata.divisions import Division
 from boundaries.models import BoundarySet
 
 
-def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id', ignore=None, end=None, quiet=False, **kwargs):
+def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id', ignore=None, quiet=False):
     if ignore:
         ignore = re.compile(ignore)
     ignored = 0
