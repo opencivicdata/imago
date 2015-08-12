@@ -197,6 +197,7 @@ MEMBERSHIP_SERIALIZE = {
     "person": PERSON_SERIALIZE,
     "post": POST_SERIALIZE,
     "on_behalf_of": ORGANIZATION_SERIALIZE,
+    "contact_details": CONTACT_DETAIL_SERIALIZE,
 }
 
 
