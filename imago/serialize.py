@@ -257,7 +257,10 @@ BILL_SERIALIZE = dict([
 
     ('actions', {'organization': ORGANIZATION_SERIALIZE, 'description': {},
                  'date': {}, 'classification': lambda x: x.classification,
-                 'order': {}}),
+                 'order': {}, 
+                 'related_entities' : {'name' : {}, 'entity_type' : {},
+                                       'organization_id' : {}, 
+                                       'person_id' : {}}}),
 
     ('sponsorships', {"primary": {}, "classification": {}, "entity_name": {},
                       "entity_type": {}, "entity_id": {}}),
