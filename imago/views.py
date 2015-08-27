@@ -236,6 +236,10 @@ class BillDetail(PublicDetailEndpoint):
         'actions.classification',
         'actions.organization.id',
         'actions.organization.name',
+        'actions.related_entities.name',
+        'actions.related_entities.organization_id',
+        'actions.related_entities.person_id',
+        'actions.related_entities.entity_type',
 
         'votes.result',
         'votes.motion_text',
