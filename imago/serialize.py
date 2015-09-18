@@ -180,6 +180,7 @@ POST_SERIALIZE = dict([
     ("contact_details", CONTACT_DETAIL_SERIALIZE),
     ("organization", ORGANIZATION_SERIALIZE),
     ("division", DIVISION_SERIALIZE),
+    ("division_id", {}),
 ])
 
 
