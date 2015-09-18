@@ -146,6 +146,8 @@ ORGANIZATION_SERIALIZE['identifiers'] = {
 PERSON_SERIALIZE = dict([
     ("id", {}),
     ("name", {}),
+    ("given_name", {}),
+    ("family_name", {}),
     ("sort_name", {}),
     ("image", {}),
     ("gender", {}),
