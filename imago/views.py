@@ -100,6 +100,7 @@ class OrganizationDetail(PublicDetailEndpoint):
 
         'posts.id',
         'posts.label',
+        'posts.division_id',
         'posts.role',
     ]
 
