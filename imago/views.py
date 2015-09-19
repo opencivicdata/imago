@@ -324,5 +324,6 @@ class DivisionDetail(PublicDetailEndpoint):
                       'posts.id',
                       'posts.organization.id',
                       'posts.organization.name',
+                      'posts.organization.classification',
                       'posts.label',
                       'posts.role']
