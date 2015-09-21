@@ -373,5 +373,6 @@ DIVISION_SERIALIZE = {
     'children': lambda division: [{'id': d.id, 'name': d.name}
                                    for d in Division.objects.children_of(division.id)],
     'geometries': lambda division: [boundary_to_dict(dg.boundary)
-                                    for dg in division.geometries.all()]
+                                    for dg in division.geometries.all()],
+    'posts' : POST_SERIALIZE
 }

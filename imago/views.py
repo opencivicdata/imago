@@ -319,4 +319,15 @@ class DivisionList(PublicListEndpoint):
 class DivisionDetail(PublicDetailEndpoint):
     model = Division
     serialize_config = DIVISION_SERIALIZE
-    default_fields = ['id', 'name', 'country', 'jurisdictions', 'children', 'geometries']
+    default_fields = ['id', 
+                      'name', 
+                      'country', 
+                      'jurisdictions', 
+                      'children', 
+                      'geometries',
+                      'posts.id',
+                      'posts.organization.id',
+                      'posts.organization.name',
+                      'posts.organization.classification',
+                      'posts.label',
+                      'posts.role']
