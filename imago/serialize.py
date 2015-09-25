@@ -49,7 +49,7 @@ def sfilter(obj, blacklist):
 
 
 DIVISION_SERIALIZE = dict([("id", {}), ("name", {})])
-SOURCES_SERIALIZE = {"note": {}, "url": {},}
+SOURCES_SERIALIZE = {"note": {}, "url": {}}
 
 JURISDICTION_SERIALIZE = dict([
     ("id", {}),
@@ -93,7 +93,6 @@ LINK_SERIALIZE = dict([
     ("note", {}),
     ("url", {}),
 ])
-
 
 
 IDENTIFIERS_SERIALIZE = {
@@ -267,9 +266,9 @@ BILL_SERIALIZE = dict([
     ('actions', {'organization': ORGANIZATION_SERIALIZE, 'description': {},
                  'date': {}, 'classification': lambda x: x.classification,
                  'order': {},
-                 'related_entities' : {'name' : {}, 'entity_type' : {},
-                                       'organization_id' : {},
-                                       'person_id' : {}}}),
+                 'related_entities': {'name': {}, 'entity_type': {},
+                                      'organization_id': {},
+                                      'person_id': {}}}),
 
     ('sponsorships', {"primary": {}, "classification": {}, "entity_name": {},
                       "entity_type": {}, "entity_id": {}}),
@@ -362,6 +361,7 @@ EVENT_SERIALIZE = dict([
     ("sources", SOURCES_SERIALIZE),
 ])
 
+
 def boundary_to_dict(boundary):
     d = boundary.as_dict()
     d['boundary_set'] = {'start_date': boundary.set.start_date,
@@ -376,8 +376,8 @@ DIVISION_SERIALIZE = {
     'country': {},
     'jurisdictions': JURISDICTION_SERIALIZE,
     'children': lambda division: [{'id': d.id, 'name': d.name}
-                                   for d in Division.objects.children_of(division.id)],
+                                  for d in Division.objects.children_of(division.id)],
     'geometries': lambda division: [boundary_to_dict(dg.boundary)
                                     for dg in division.geometries.all()],
-    'posts' : POST_SERIALIZE
+    'posts': POST_SERIALIZE
 }

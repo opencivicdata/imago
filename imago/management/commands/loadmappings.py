@@ -8,7 +8,8 @@ from opencivicdata.divisions import Division
 from boundaries.models import BoundarySet
 
 
-def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id', ignore=None, quiet=False):
+def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id',
+                 ignore=None, quiet=False):
     if ignore:
         ignore = re.compile(ignore)
     ignored = 0

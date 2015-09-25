@@ -28,7 +28,7 @@ def get_field_list(model, without=None):
         without = set(without)
     return list(({x.name for x in model._meta.get_fields()} |
                  {x.attname for x in model._meta.get_fields() if hasattr(x, 'attname')})
-                 - without)
+                - without)
 
 
 class FieldKeyError(KeyError):
@@ -70,7 +70,7 @@ def get_fields(root, fields):
             if obj == {} or obj.get("fields"):
                 return obj
             obj = list(filter(
-                lambda x: x[1] != None,
+                lambda x: x[1] is not None,
                 [(x, fwrap(y, memo=memo)) for x, y in obj.items()]
             ))
             if obj == []:
@@ -298,8 +298,7 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         except FieldKeyError as e:
             raise HttpError(400, "Error: You've asked for a field ({}) that "
                             "is invalid. Valid fields are: {}".format(
-                                e.field, ', '.join(self.serialize_config.keys()))
-                           )
+                                e.field, ', '.join(self.serialize_config.keys())))
         except KeyError as e:
             raise HttpError(400, "Error: Invalid field: %s" % (e))
 

@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from imago.views import (JurisdictionList,
                          PeopleList,
                          VoteList,
@@ -12,8 +12,7 @@ from imago.views import (JurisdictionList,
                          VoteDetail,
                          BillDetail,
                          OrganizationDetail,
-                         DivisionDetail
-                        )
+                         DivisionDetail)
 
 urlpatterns = [
     url(r'^jurisdictions/$', JurisdictionList.as_view()),

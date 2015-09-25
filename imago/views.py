@@ -9,8 +9,7 @@ from opencivicdata.models import (Jurisdiction,
                                   Bill,
                                   VoteEvent,
                                   Event,
-                                  Division
-                                 )
+                                  Division)
 
 from .helpers import (PublicListEndpoint,
                       PublicDetailEndpoint,
@@ -22,8 +21,7 @@ from .serialize import (JURISDICTION_SERIALIZE,
                         VOTE_SERIALIZE,
                         BILL_SERIALIZE,
                         EVENT_SERIALIZE,
-                        DIVISION_SERIALIZE
-                       )
+                        DIVISION_SERIALIZE)
 from restless.http import HttpError
 import datetime
 from django.db.models import Q
@@ -53,11 +51,11 @@ class JurisdictionDetail(PublicDetailEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
     default_fields = get_field_list(model, without=[
-        'event_locations', 
-        'events', 
-        'organizations', 
-        'division', 
-        'locked_fields', 
+        'event_locations',
+        'events',
+        'organizations',
+        'division',
+        'locked_fields',
         'runs',
     ]) + [
         'division.id', 'division.name'
@@ -68,8 +66,7 @@ class OrganizationList(PublicListEndpoint):
     model = Organization
     serialize_config = ORGANIZATION_SERIALIZE
     default_fields = ['id', 'name', 'image', 'classification',
-                      'jurisdiction.id', 'parent.id', 'parent.name',
-                     ]
+                      'jurisdiction.id', 'parent.id', 'parent.name']
 
 
 class OrganizationDetail(PublicDetailEndpoint):
@@ -103,7 +100,6 @@ class OrganizationDetail(PublicDetailEndpoint):
         'posts.division_id',
         'posts.role',
     ]
-
 
 
 class PeopleList(PublicListEndpoint):
@@ -306,8 +302,10 @@ class DivisionList(PublicListEndpoint):
 
         if (lat and lon):
             data = data.filter(
-                Q(geometries__boundary__set__start_date__lte=date) | Q(geometries__boundary__set__start_date=None),
-                Q(geometries__boundary__set__end_date__gte=date) | Q(geometries__boundary__set__end_date=None),
+                Q(geometries__boundary__set__start_date__lte=date) |
+                Q(geometries__boundary__set__start_date=None),
+                Q(geometries__boundary__set__end_date__gte=date) |
+                Q(geometries__boundary__set__end_date=None),
                 geometries__boundary__shape__contains='POINT({} {})'.format(lon, lat)
             )
         elif (lat and not lon) or (lon and not lat):
@@ -319,11 +317,11 @@ class DivisionList(PublicListEndpoint):
 class DivisionDetail(PublicDetailEndpoint):
     model = Division
     serialize_config = DIVISION_SERIALIZE
-    default_fields = ['id', 
-                      'name', 
-                      'country', 
-                      'jurisdictions', 
-                      'children', 
+    default_fields = ['id',
+                      'name',
+                      'country',
+                      'jurisdictions',
+                      'children',
                       'geometries',
                       'posts.id',
                       'posts.organization.id',
