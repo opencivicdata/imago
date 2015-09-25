@@ -125,24 +125,6 @@ def cachebusterable(fn):
     return _
 
 
-def no_authentication_or_is_authenticated():
-    return (not hasattr(settings, 'USE_LOCKSMITH') or not settings.USE_LOCKSMITH
-            or hasattr(request, 'apikey') and request.apikey.status == 'A')
-
-def authenticated(fn):
-    """ ensure that request.apikey is valid """
-    def _(self, request, *args, **kwargs):
-        if no_authentication_or_is_authenticated():
-            if 'apikey' in request.params:
-                request.params.pop('apikey')
-
-            return fn(self, request, *args, **kwargs)
-        else:
-            raise HttpError(403, "Authorization Required: obtain a key at " +
-                            settings.LOCKSMITH_REGISTRATION_URL)
-    return _
-
-
 class DebugMixin(object):
 
     def start_debug(self):
@@ -267,7 +249,6 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         paginator = Paginator(data, per_page=per_page)
         return paginator.page(page)
 
-    @authenticated
     @cachebusterable
     def get(self, request, *args, **kwargs):
         """
@@ -370,7 +351,6 @@ class PublicDetailEndpoint(DetailEndpoint, DebugMixin):
 
     methods = ['GET']
 
-    @authenticated
     @cachebusterable
     def get(self, request, pk, *args, **kwargs):
         params = request.params
