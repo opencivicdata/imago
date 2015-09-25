@@ -85,10 +85,11 @@ CONTACT_DETAIL_SERIALIZE = dict([("type", {}), ("value", {}),
                                  ("note", {}), ("label", {})])
 
 
-LINK_SERALIZE = dict([
+LINK_SERIALIZE = dict([
     ("note", {}),
     ("url", {}),
 ])
+
 
 
 IDENTIFIERS_SERIALIZE = {
@@ -116,7 +117,7 @@ ORGANIZATION_SERIALIZE = dict([
     ("extras", lambda x: x.extras),
 
     ("identifiers", IDENTIFIERS_SERIALIZE),
-    ("links", LINK_SERALIZE),
+    ("links", LINK_SERIALIZE),
     ("contact_details", CONTACT_DETAIL_SERIALIZE),
     ("other_names", OTHER_NAMES_SERIALIZE),
     ("classification", {}),
@@ -146,6 +147,8 @@ ORGANIZATION_SERIALIZE['identifiers'] = {
 PERSON_SERIALIZE = dict([
     ("id", {}),
     ("name", {}),
+    ("given_name", {}),
+    ("family_name", {}),
     ("sort_name", {}),
     ("image", {}),
     ("gender", {}),
@@ -163,7 +166,7 @@ PERSON_SERIALIZE = dict([
     ("identifiers", IDENTIFIERS_SERIALIZE),
     ("other_names", OTHER_NAMES_SERIALIZE),
     ("contact_details", CONTACT_DETAIL_SERIALIZE),
-    ("links", LINK_SERALIZE),
+    ("links", LINK_SERIALIZE),
     ("sources", SOURCES_SERIALIZE),
 ])
 
@@ -174,10 +177,11 @@ POST_SERIALIZE = dict([
     ("role", {}),
     ("start_date", {}),
     ("end_date", {}),
-    ("links", LINK_SERALIZE),
+    ("links", LINK_SERIALIZE),
     ("contact_details", CONTACT_DETAIL_SERIALIZE),
     ("organization", ORGANIZATION_SERIALIZE),
     ("division", DIVISION_SERIALIZE),
+    ("division_id", {}),
 ])
 
 
@@ -197,6 +201,7 @@ MEMBERSHIP_SERIALIZE = {
     "person": PERSON_SERIALIZE,
     "post": POST_SERIALIZE,
     "on_behalf_of": ORGANIZATION_SERIALIZE,
+    "contact_details": CONTACT_DETAIL_SERIALIZE,
 }
 
 
@@ -331,9 +336,9 @@ EVENT_SERIALIZE = dict([
                       "entity_id": {}}),
 
     ('documents', {"note": {}, "date": {}, "links": LINK_BASE}),
-    ('media', {"note": {}, "date": {}, "offset": {}, "links": LINK_SERALIZE}),
+    ('media', {"note": {}, "date": {}, "offset": {}, "links": LINK_BASE}),
 
-    ("links", LINK_SERALIZE),
+    ("links", LINK_SERIALIZE),
 
     ('created_at', {}),
     ('updated_at', {}),
@@ -369,5 +374,6 @@ DIVISION_SERIALIZE = {
     'children': lambda division: [{'id': d.id, 'name': d.name}
                                    for d in Division.objects.children_of(division.id)],
     'geometries': lambda division: [boundary_to_dict(dg.boundary)
-                                    for dg in division.geometries.all()]
+                                    for dg in division.geometries.all()],
+    'posts' : POST_SERIALIZE
 }

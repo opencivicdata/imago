@@ -53,7 +53,12 @@ class JurisdictionDetail(PublicDetailEndpoint):
     model = Jurisdiction
     serialize_config = JURISDICTION_SERIALIZE
     default_fields = get_field_list(model, without=[
-        'event_locations', 'events', 'organizations', 'division',
+        'event_locations', 
+        'events', 
+        'organizations', 
+        'division', 
+        'locked_fields', 
+        'runs',
     ]) + [
         'division.id', 'division.name'
     ]
@@ -74,7 +79,7 @@ class OrganizationDetail(PublicDetailEndpoint):
         'memberships_on_behalf_of', 'billactionrelatedentity',
         'eventrelatedentity', 'eventparticipant', 'jurisdiction_id',
         'billsponsorship', 'memberships', 'parent_id', 'children', 'actions',
-        'parent', 'posts', 'bills', 'votes',
+        'parent', 'posts', 'bills', 'votes', 'locked_fields',
     ]) + [
         'parent.id',
         'parent.name',
@@ -95,6 +100,7 @@ class OrganizationDetail(PublicDetailEndpoint):
 
         'posts.id',
         'posts.label',
+        'posts.division_id',
         'posts.role',
     ]
 
@@ -137,6 +143,7 @@ class PersonDetail(PublicDetailEndpoint):
         'billsponsorship',
         'eventrelatedentity',
         'memberships',
+        'locked_fields',
     ]) + [
         'memberships.label',
         'memberships.role',
@@ -147,6 +154,10 @@ class PersonDetail(PublicDetailEndpoint):
         'memberships.post.id',
         'memberships.post.division.id',
         'memberships.post.division.name',
+        'memberships.contact_details.type',
+        'memberships.contact_details.value',
+        'memberships.contact_details.note',
+        'memberships.contact_details.label',
         'memberships.organization.id',
         'memberships.organization.name',
         'memberships.organization.jurisdiction.id',
@@ -205,6 +216,7 @@ class VoteDetail(PublicDetailEndpoint):
         'organization',
         'organization_id',
         'bill_id',
+        'locked_fields',
     ]) + [
         'bill.id',
         'bill.identifier',
@@ -225,7 +237,8 @@ class BillDetail(PublicDetailEndpoint):
         'related_bills_reverse',
         'legislative_session_id',
         'actions.organization',
-        'votes'
+        'votes',
+        'locked_fields',
     ]) + [
         'from_organization.id',
         'from_organization.name',
@@ -270,6 +283,7 @@ class EventDetail(PublicDetailEndpoint):
     serialize_config = EVENT_SERIALIZE
     default_fields = get_field_list(model, without=[
         'location_id',
+        'locked_fields',
     ])
 
 
@@ -305,4 +319,15 @@ class DivisionList(PublicListEndpoint):
 class DivisionDetail(PublicDetailEndpoint):
     model = Division
     serialize_config = DIVISION_SERIALIZE
-    default_fields = ['id', 'name', 'country', 'jurisdictions', 'children', 'geometries']
+    default_fields = ['id', 
+                      'name', 
+                      'country', 
+                      'jurisdictions', 
+                      'children', 
+                      'geometries',
+                      'posts.id',
+                      'posts.organization.id',
+                      'posts.organization.name',
+                      'posts.organization.classification',
+                      'posts.label',
+                      'posts.role']
