@@ -31,6 +31,10 @@ def dout(obj):
     """
     if obj is None:
         return
+    elif obj.tzinfo == pytz.UTC:
+        return obj
+    else:
+        raise ValueError('non-naive datetime: {}'.format(obj))
     return pytz.UTC.localize(obj).isoformat()
 
 
@@ -262,9 +266,9 @@ BILL_SERIALIZE = dict([
 
     ('actions', {'organization': ORGANIZATION_SERIALIZE, 'description': {},
                  'date': {}, 'classification': lambda x: x.classification,
-                 'order': {}, 
+                 'order': {},
                  'related_entities' : {'name' : {}, 'entity_type' : {},
-                                       'organization_id' : {}, 
+                                       'organization_id' : {},
                                        'person_id' : {}}}),
 
     ('sponsorships', {"primary": {}, "classification": {}, "entity_name": {},
