@@ -166,6 +166,8 @@ class BillList(PublicListEndpoint):
     default_fields = [
         'id', 'identifier', 'title', 'classification', 'subject',
 
+        'legislative_session.identifier',
+
         'from_organization.name',
         'from_organization.id',
 
@@ -173,7 +175,19 @@ class BillList(PublicListEndpoint):
         'from_organization.jurisdiction.name',
     ]
 
+    def adjust_complex_filters(self, params):
+        if 'sponsor_id' in params:
+            sp_id = params.pop('sponsor_id')
+            return [Q(sponsorships__person_id=sp_id) |
+                    Q(sponsorships__organization_id=sp_id)
+                    ]
+        else:
+            return []
+
+
     def adjust_filters(self, params):
+        if 'sponsor' in params:
+            params['sponsorships__name'] = params.pop('sponsor')
         if 'subject' in params:
             params['subject__contains'] = [params.pop('subject')]
         if 'classification' in params:
