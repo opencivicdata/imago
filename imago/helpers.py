@@ -217,6 +217,12 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         """
         return params
 
+    def adjust_complex_filters(self, params):
+        """
+        return a series of Q() objects as needed to make the query
+        """
+        return []
+
     def filter(self, data, **kwargs):
         """
         Filter the Django query set.
@@ -224,13 +230,12 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         THe kwargs will be unpacked into Django directly, letting you
         use full Django query syntax here.
         """
+        qs = self.adjust_complex_filters(kwargs)
         kwargs = self.adjust_filters(kwargs)
         try:
-            return data.filter(**kwargs)
+            return data.filter(*qs, **kwargs)
         except FieldError:
             raise HttpError(400, "Error: You've passed an invalid filter parameter.")
-        except Exception:
-            raise HttpError(500, "Error: Something went wrong with your request")
 
     def sort(self, data, sort_by):
         """
@@ -367,8 +372,6 @@ class PublicDetailEndpoint(DetailEndpoint, DebugMixin):
             obj = self.model.objects.prefetch_related(*related).get(pk=pk)
         except ObjectDoesNotExist as e:
             raise HttpError(404, "Error: {}".format(e))
-        except Exception:
-            raise HttpError(500, "Error: Something went wrong with your request")
 
         serialized = serialize(obj, **config)
         serialized['debug'] = self.get_debug()
