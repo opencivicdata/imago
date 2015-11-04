@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from imago.views import (JurisdictionList,
                          PeopleList,
                          VoteList,
@@ -16,8 +16,7 @@ from imago.views import (JurisdictionList,
                          DivisionDetail
                         )
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^jurisdictions/$', JurisdictionList.as_view()),
     url(r'^people/$', PeopleList.as_view()),
     url(r'^votes/$', VoteList.as_view()),
@@ -34,4 +33,4 @@ urlpatterns = patterns(
     url(r'^(?P<pk>ocd-organization/.+)/$', OrganizationDetail.as_view()),
     url(r'^(?P<pk>ocd-bill/.+)/$', BillDetail.as_view()),
     url(r'^(?P<pk>ocd-division/.+)/$', DivisionDetail.as_view()),
-)
+]
