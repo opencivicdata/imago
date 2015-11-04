@@ -26,7 +26,7 @@ def get_field_list(model, without=None):
         without = set()
     else:
         without = set(without)
-    return list(set(model._meta.get_all_field_names()) - without)
+    return list({f.name for f in model._meta.get_fields()} - without)
 
 
 class FieldKeyError(KeyError):
