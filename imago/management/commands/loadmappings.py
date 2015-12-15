@@ -51,11 +51,12 @@ def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id', ignor
 class Command(BaseCommand):
     help = 'load in division-boundary mappings'
 
-    option_list = BaseCommand.option_list + (
-        make_option('--quiet', action='store_true', dest='quiet',
-                    default=False, help='Be somewhat quiet.'),
-    )
-
+    def add_arguments(self, parser):
+        parser.add_argument('--quiet',
+            action='store_true',
+            dest='quiet',
+            default=False,
+            help='Be somewhat quiet.')
 
     def handle(self, *args, **options):
         with transaction.atomic():
