@@ -19,7 +19,9 @@ def load_mapping(boundary_set_id, key, prefix, boundary_key='external_id', ignor
     for div in Division.get('ocd-division/country:' + settings.IMAGO_COUNTRY).children(levels=100):
         if div.attrs[key]:
             geoid_mapping[div.attrs[key]] = div.id
-
+        else:
+            geoid_mapping[div.id] = div.id
+    
     print('processing', boundary_set_id)
 
     boundary_set = BoundarySet.objects.get(pk=boundary_set_id)
