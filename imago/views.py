@@ -269,12 +269,6 @@ class EventList(PublicListEndpoint):
     default_fields = [
         'id', 'name', 'description', 'classification', 'start_time',
         'timezone', 'end_time', 'all_day', 'status',
-
-        'agenda.description', 'agenda.order', 'agenda.subjects',
-        'agenda.related_entities.note',
-        'agenda.related_entities.entity_name',
-        'agenda.related_entities.entity_id',
-        'agenda.related_entities.entity_type',
     ]
 
 
