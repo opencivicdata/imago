@@ -289,7 +289,6 @@ class PublicListEndpoint(ListEndpoint, DebugMixin):
         data = self.get_query_set(request, *args, **kwargs)
         data = self.filter(data, **params)
         data = self.sort(data, sort_by)
-        data = data.distinct("id")
 
         try:
             related, config = get_fields(self.serialize_config, fields=fields)
