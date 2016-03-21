@@ -31,6 +31,8 @@ def dout(obj):
     """
     if obj is None:
         return
+    if obj.tzinfo:
+        return obj.astimezone(pytz.UTC).isoformat()
     return pytz.UTC.localize(obj).isoformat()
 
 
